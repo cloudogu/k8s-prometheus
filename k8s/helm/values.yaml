@@ -1,0 +1,20 @@
+prometheus:
+  kube-state-metrics:
+    enabled: true
+  alertmanager:
+    enabled: false
+  prometheus-node-exporter:
+    enabled: false
+  prometheus-pushgateway:
+    enabled: false
+  
+  server:
+    tcpSocketProbeEnabled: true
+    extraArgs:
+      web.config.file: /etc/ces-config/web.config.yaml
+    extraSecretMounts:
+      - name: "auth-secret"
+        mountPath: /etc/ces-config/web.config.yaml
+        subPath: "web.config.yaml"
+        secretName: "k8s-prometheus-auth-secret"
+        readOnly: true
