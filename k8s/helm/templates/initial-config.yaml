@@ -1,0 +1,13 @@
+{{ $username := randAlphaNum 12 }}
+{{ $password :=  randAlphaNum 24  }}
+{{ $hashedPassword :=  bcrypt $password  }}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "k8s-prometheus-initial-config"
+  labels:
+    app: ces
+    app.kubernetes.io/name: k8s-prometheus
+data:
+  web.config.yaml: |-
+{{ .Files.Get "resources/web.config.yaml" | replace "<INITIAL_USER>" $username | replace "<INITIAL_PASSWORD>" $hashedPassword | indent 4}}

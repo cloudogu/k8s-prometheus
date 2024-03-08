@@ -4,17 +4,60 @@ prometheus:
   alertmanager:
     enabled: false
   prometheus-node-exporter:
-    enabled: false
+    enabled: true
   prometheus-pushgateway:
     enabled: false
-  
+
+  nameOverride: "k8s-prometheus"
+
   server:
     tcpSocketProbeEnabled: true
     extraArgs:
       web.config.file: /etc/ces-config/web.config.yaml
-    extraSecretMounts:
-      - name: "auth-secret"
-        mountPath: /etc/ces-config/web.config.yaml
-        subPath: "web.config.yaml"
-        secretName: "k8s-prometheus-auth-secret"
-        readOnly: true
+    extraVolumeMounts:
+      - mountPath: /etc/ces-config
+        name: ces-config
+    podLabels:
+      app: "ces"
+      app.kubernetes.io/name: "k8s-prometheus"
+    podAnnotations:
+      ces.cloudogu.com/serviceaccount-port: "8080"
+      ces.cloudogu.com/serviceaccount-path: "/serviceaccounts"
+      ces.cloudogu.com/serviceaccount-secret-name: "k8s-prometheus-service-account-api"
+      ces.cloudogu.com/serviceaccount-secret-key: "apiKey"
+    extraVolumes:
+      - name: ces-config
+        persistentVolumeClaim:
+          claimName: k8s-prometheus-config
+      - name: initial-config
+        configMap:
+          name: k8s-prometheus-initial-config
+    extraInitContainers:
+      - name: config-init
+        image: busybox
+        command:
+          - 'sh'
+          - '-c'
+          - 'cp -n /initial-config/web.config.yaml /config/web.config.yaml'
+        volumeMounts:
+          - name: ces-config
+            mountPath: /config
+          - name: initial-config
+            mountPath: /initial-config
+    sidecarContainers:
+      serviceaccount:
+        image: k3ces.local:30099/k8s-prometheus:2.50.1-1
+        imagePullPolicy: Always
+        env:
+          - name: WEB_CONFIG_FILE
+            value: "/config/web.config.yaml"
+          - name: API_KEY
+            valueFrom:
+              secretKeyRef:
+                name: k8s-prometheus-service-account-api
+                key: apiKey
+        ports:
+          - containerPort: 8080
+        volumeMounts:
+          - name: ces-config
+            mountPath: /config

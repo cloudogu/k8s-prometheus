@@ -4,6 +4,9 @@ VERSION=2.50.1-1
 
 .DEFAULT_GOAL:=help
 
+IMAGE?=cloudogu/${ARTIFACT_ID}:${VERSION}
+IMAGE_IMPORT_TARGET=image-import
+
 ADDITIONAL_CLEAN=clean_charts
 clean_charts:
 	rm -rf ${K8S_HELM_RESSOURCES}/charts
