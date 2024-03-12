@@ -4,8 +4,11 @@ VERSION=2.50.1-1
 
 .DEFAULT_GOAL:=help
 
-IMAGE?=cloudogu/${ARTIFACT_ID}:${VERSION}
+IMAGE?=cloudogu/${ARTIFACT_ID}-service-account-provider:${VERSION}
+IMAGE_DEV?=${K3CES_REGISTRY_URL_PREFIX}/${ARTIFACT_ID}-service-account-provider
 IMAGE_IMPORT_TARGET=image-import
+K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
+HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo
 
 ADDITIONAL_CLEAN=clean_charts
 clean_charts:
@@ -15,10 +18,17 @@ include build/make/variables.mk
 include build/make/clean.mk
 include build/make/release.mk
 include build/make/self-update.mk
-
-##@ Release
-
 include build/make/k8s-component.mk
+
+.PHONY: helm-values-replace-image-repo
+helm-values-replace-image-repo: $(BINARY_YQ)
+	@if [[ ${STAGE} == "development" ]]; then \
+		echo "Setting dev image repo in target values.yaml to ${IMAGE_DEV}..." ;\
+		$(BINARY_YQ) -i e ".prometheus.server.sidecarContainers.serviceaccount.image=\"${IMAGE_DEV}:${VERSION}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+	else \
+		echo "Setting dev image repo in target values.yaml to ${IMAGE}..." ;\
+		$(BINARY_YQ) -i e ".prometheus.server.sidecarContainers.serviceaccount.image=\"${IMAGE}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+	fi
 
 .PHONY: prometheus-release
 loki-release: ## Interactively starts the release workflow for loki

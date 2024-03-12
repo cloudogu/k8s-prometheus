@@ -1,16 +1,30 @@
 prometheus:
+  nameOverride: "k8s-prometheus"
   kube-state-metrics:
     enabled: true
+    image:
+      registry: registry.k8s.io
+      repository: kube-state-metrics/kube-state-metrics
+      tag: "v2.10.1"
   alertmanager:
     enabled: false
   prometheus-node-exporter:
     enabled: true
+    image:
+      registry: quay.io
+      repository: prometheus/node-exporter
+      tag: "v1.7.0"
   prometheus-pushgateway:
     enabled: false
-
-  nameOverride: "k8s-prometheus"
-
+  configmapReload:
+    prometheus:
+      image:
+        repository: quay.io/prometheus-operator/prometheus-config-reloader
+        tag: v0.71.2
   server:
+    image:
+      repository: quay.io/prometheus/prometheus
+      tag: "v2.50.1"
     tcpSocketProbeEnabled: true
     extraArgs:
       web.config.file: /etc/ces-config/web.config.yaml
@@ -30,7 +44,7 @@ prometheus:
           name: k8s-prometheus-initial-config
     extraInitContainers:
       - name: config-init
-        image: busybox
+        image: busybox:1.36
         command:
           - 'sh'
           - '-c'
@@ -42,7 +56,7 @@ prometheus:
             mountPath: /initial-config
     sidecarContainers:
       serviceaccount:
-        image: k3ces.local:30099/k8s-prometheus:2.50.1-1
+        image: cloudogu/k8s-prometheus:2.50.1-1
         imagePullPolicy: Always
         env:
           - name: WEB_CONFIG_FILE

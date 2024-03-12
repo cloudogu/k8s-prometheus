@@ -1,41 +1,50 @@
 apiVersion: v1
 values:
   images:
-    kubectl: docker.io/bitnami/kubectl:1.28.4
-    loki: docker.io/grafana/loki:2.9.1
-    lokiCanary: docker.io/grafana/loki-canary:2.9.1
-    gateway: docker.io/nginxinc/nginx-unprivileged:1.23-alpine
-    sidecar: kiwigrid/k8s-sidecar:1.24.3
-    grafanaAgentOp: docker.io/grafana/agent-operator:v0.34.1
+    kubeStateMetrics: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1
+    prometheusNodeExporter: quay.io/prometheus/node-exporter:v1.7.0
+    configmapReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.71.2
+    prometheusServer: quay.io/prometheus/prometheus:v2.50.1
+    configInitContainer: busybox:1.36
+    saProviderSidecar: k3ces.local:30099/k8s-prometheus:2.50.1-1
 patches:
   values.yaml:
-    loki:
-      kubectlImage:
-        registry: "{{ registryFrom .images.kubectl }}"
-        repository: "{{ repositoryFrom .images.kubectl }}"
-        tag: "{{ tagFrom .images.kubectl }}"
-      loki:
+    prometheus:
+      kube-state-metrics:
+        enabled: true
         image:
-          registry: "{{ registryFrom .images.loki }}"
-          repository: "{{ repositoryFrom .images.loki }}"
-          tag: "{{ tagFrom .images.loki }}"
-      monitoring:
-        lokiCanary:
+          registry: "{{ registryFrom .images.kubeStateMetrics }}"
+          repository: "{{ repositoryFrom .images.kubeStateMetrics }}"
+          tag: "{{ tagFrom .images.kubeStateMetrics }}"
+      alertmanager:
+        enabled: false
+      prometheus-node-exporter:
+        enabled: true
+        image:
+          registry: "{{ registryFrom .images.prometheusNodeExporter }}"
+          repository: "{{ repositoryFrom .images.prometheusNodeExporter }}"
+          tag: "{{ tagFrom .images.prometheusNodeExporter }}"
+      configmapReload:
+        prometheus:
           image:
-            registry: "{{ registryFrom .images.lokiCanary }}"
-            repository: "{{ repositoryFrom .images.lokiCanary }}"
-            tag: "{{ tagFrom .images.lokiCanary }}"
-      gateway:
+            repository: "{{ registryFrom .images.configmapReloader }}/{{ repositoryFrom .images.configmapReloader }}"
+            tag: "{{ tagFrom .images.configmapReloader }}"
+      server:
         image:
-          registry: "{{ registryFrom .images.gateway }}"
-          repository: "{{ repositoryFrom .images.gateway }}"
-          tag: "{{ tagFrom .images.gateway }}"
-      sidecar:
-        image:
-          repository: "{{ registryFrom .images.sidecar }}/{{ repositoryFrom .images.sidecar }}"
-          tag: "{{ tagFrom .images.sidecar }}"
-      grafana-agent-operator:
-        image:
-          registry: "{{ registryFrom .images.grafanaAgentOp }}"
-          repository: "{{ repositoryFrom .images.grafanaAgentOp }}"
-          tag: "{{ tagFrom .images.grafanaAgentOp }}"
+          repository: "{{ registryFrom .images.prometheusServer }}/{{ repositoryFrom .images.prometheusServer }}"
+          tag: "{{ tagFrom .images.prometheusServer }}"
+      sidecarContainers:
+        serviceaccount:
+          image: "{{ registryFrom .images.saProviderSidecar }}/{{ repositoryFrom .images.saProviderSidecar }}:{{ tagFrom .images.saProviderSidecar }}"
+      extraInitContainers:
+        - name: config-init
+          image: "{{ registryFrom .images.configInitContainer }}/{{ repositoryFrom .images.configInitContainer }}:{{ tagFrom .images.configInitContainer }}"
+          command:
+            - 'sh'
+            - '-c'
+            - 'cp -n /initial-config/web.config.yaml /config/web.config.yaml'
+          volumeMounts:
+            - name: ces-config
+              mountPath: /config
+            - name: initial-config
+              mountPath: /initial-config
