@@ -36,6 +36,6 @@ COPY --from=builder /workspace/target/k8s-prometheus-serviceaccount .
 # dockerfile_lint - ignore
 USER 65532:65532
 
-EXPOSE 8080
+EXPOSE 8087
 
 ENTRYPOINT ["/k8s-prometheus-serviceaccount"]

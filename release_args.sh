@@ -45,10 +45,10 @@ update_versions_modify_files() {
   setAttributeInComponentPatchTemplate ".values.images.configInitContainer" "${configInitContainerImage}"
 
   # update version of sidecar-image in values.yaml
-  yq -i ".prometheus.server.sidecarContainers.serviceaccount.image |= sub(\":(([0-9]+)\.([0-9]+)\.([0-9]+)((?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))|(?:\+[0-9A-Za-z-]+))?)\", \":${newReleaseVersion}\")" "${prometheusValues}"
+  yq -i ".kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image |= sub(\":(([0-9]+)\.([0-9]+)\.([0-9]+)((?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))|(?:\+[0-9A-Za-z-]+))?)\", \":${newReleaseVersion}\")" "${prometheusValues}"
 
   local saProviderSidecarImage
-  saProviderSidecarImage=$(yq '.prometheus.server.sidecarContainers.serviceaccount.image' < "${prometheusValues}")
+  saProviderSidecarImage=$(yq '.kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image' < "${prometheusValues}")
   setAttributeInComponentPatchTemplate ".values.images.saProviderSidecar" "${saProviderSidecarImage}"
 }
 

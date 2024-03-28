@@ -25,7 +25,7 @@ func main() {
 	fmt.Println("service-account-sidecar started on port 8080...")
 
 	// listen and serve on 0.0.0.0:8080
-	if err := r.Run(); err != nil {
+	if err := r.Run(":8087"); err != nil {
 		panic(err)
 	}
 }

@@ -23,11 +23,11 @@ include build/make/k8s-component.mk
 .PHONY: helm-values-replace-image-repo
 helm-values-replace-image-repo: $(BINARY_YQ)
 	@if [[ ${STAGE} == "development" ]]; then \
-		echo "Setting dev image repo in target values.yaml to ${IMAGE_DEV}..." ;\
-		$(BINARY_YQ) -i e ".prometheus.server.sidecarContainers.serviceaccount.image=\"${IMAGE_DEV}:${VERSION}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+		echo "Setting dev image repo in target values.yaml to ${IMAGE_DEV}:${VERSION}..." ;\
+		$(BINARY_YQ) -i e ".kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image=\"${IMAGE_DEV}:${VERSION}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
 	else \
-		echo "Setting dev image repo in target values.yaml to ${IMAGE}..." ;\
-		$(BINARY_YQ) -i e ".prometheus.server.sidecarContainers.serviceaccount.image=\"${IMAGE}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+		echo "Setting prod image repo in target values.yaml to ${IMAGE}..." ;\
+		$(BINARY_YQ) -i e ".kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image=\"${IMAGE}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
 	fi
 
 .PHONY: prometheus-release
