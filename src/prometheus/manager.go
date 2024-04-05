@@ -6,15 +6,30 @@ import (
 )
 
 type Manager struct {
-	rw *WebConfigReaderWriter
+	rw        *WebConfigReaderWriter
+	WebConfig *WebConfig
 }
 
 func NewManager(configFile string) *Manager {
 	return &Manager{rw: NewWebConfigReaderWriter(configFile)}
 }
 
-func (m *Manager) CreateServiceAccount(consumer string, params []string) (credentials map[string]string, err error) {
+func (m *Manager) getWebConfig() (*WebConfig, error) {
+	if m.WebConfig != nil {
+		return m.WebConfig, nil
+	}
+
 	config, err := m.rw.ReadWebConfig()
+	if err != nil {
+		return nil, err
+	}
+	m.WebConfig = config
+
+	return m.WebConfig, nil
+}
+
+func (m *Manager) CreateServiceAccount(consumer string, params []string) (credentials map[string]string, err error) {
+	config, err := m.getWebConfig()
 	if err != nil {
 		return nil, err
 	}
@@ -38,7 +53,7 @@ func (m *Manager) CreateServiceAccount(consumer string, params []string) (creden
 }
 
 func (m *Manager) DeleteServiceAccount(consumer string) error {
-	config, err := m.rw.ReadWebConfig()
+	config, err := m.getWebConfig()
 	if err != nil {
 		return err
 	}
@@ -52,4 +67,19 @@ func (m *Manager) DeleteServiceAccount(consumer string) error {
 	}
 
 	return m.rw.WriteWebConfig(config)
+}
+
+func (m *Manager) ValidateAccount(username string, password string) error {
+	config, err := m.getWebConfig()
+	if err != nil {
+		return err
+	}
+
+	for user, hashedPassword := range config.BasicAuthUsers {
+		if user == username {
+			return compareHashAndPassword(hashedPassword, password)
+		}
+	}
+
+	return fmt.Errorf("cloud not find user with name: %s", username)
 }

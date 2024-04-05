@@ -15,41 +15,57 @@ update_versions_modify_files() {
   local prometheusKubeStateMetricsRegistry
   local prometheusKubeStateMetricsRepo
   local prometheusKubeStateMetricsTag
-  prometheusKubeStateMetricsRegistry=$(yq '.prometheus.kube-state-metrics.image.registry' < "${prometheusValues}")
-  prometheusKubeStateMetricsRepo=$(yq '.prometheus.kube-state-metrics.image.repository' < "${prometheusValues}")
-  prometheusKubeStateMetricsTag=$(yq '.prometheus.kube-state-metrics.image.tag' < "${prometheusValues}")
+  prometheusKubeStateMetricsRegistry=$(yq '.kube-prometheus-stack.kube-state-metrics.image.registry' < "${prometheusValues}")
+  prometheusKubeStateMetricsRepo=$(yq '.kube-prometheus-stack.kube-state-metrics.image.repository' < "${prometheusValues}")
+  prometheusKubeStateMetricsTag=$(yq '.kube-prometheus-stack.kube-state-metrics.image.tag' < "${prometheusValues}")
   setAttributeInComponentPatchTemplate ".values.images.kubeStateMetrics" "${prometheusKubeStateMetricsRegistry}/${prometheusKubeStateMetricsRepo}:${prometheusKubeStateMetricsTag}"
 
   local prometheusNodeExporterRegistry
   local prometheusNodeExporterRepo
   local prometheusNodeExporterTag
-  prometheusNodeExporterRegistry=$(yq '.prometheus.prometheus-node-exporter.image.registry' < "${prometheusValues}")
-  prometheusNodeExporterRepo=$(yq '.prometheus.prometheus-node-exporter.image.repository' < "${prometheusValues}")
-  prometheusNodeExporterTag=$(yq '.prometheus.prometheus-node-exporter.image.tag' < "${prometheusValues}")
+  prometheusNodeExporterRegistry=$(yq '.kube-prometheus-stack.prometheus-node-exporter.image.registry' < "${prometheusValues}")
+  prometheusNodeExporterRepo=$(yq '.kube-prometheus-stack.prometheus-node-exporter.image.repository' < "${prometheusValues}")
+  prometheusNodeExporterTag=$(yq '.kube-prometheus-stack.prometheus-node-exporter.image.tag' < "${prometheusValues}")
   setAttributeInComponentPatchTemplate ".values.images.prometheusNodeExporter" "${prometheusNodeExporterRegistry}/${prometheusNodeExporterRepo}:${prometheusNodeExporterTag}"
 
-  local configmapReloaderRepo
-  local configmapReloaderTag
-  configmapReloaderRepo=$(yq '.prometheus.configmapReload.prometheus.image.repository' < "${prometheusValues}")
-  configmapReloaderTag=$(yq '.prometheus.configmapReload.prometheus.image.tag' < "${prometheusValues}")
-  setAttributeInComponentPatchTemplate ".values.images.configmapReloader" "${configmapReloaderRepo}:${configmapReloaderTag}"
+  local admissionWebhooksPatchRegistry
+  local admissionWebhooksPatchRepo
+  local admissionWebhooksPatchTag
+  admissionWebhooksPatchRegistry=$(yq '.kube-prometheus-stack.prometheusOperator.admissionWebhooks.patch.image.registry' < "${prometheusValues}")
+  admissionWebhooksPatchRepo=$(yq '.kube-prometheus-stack.prometheusOperator.admissionWebhooks.patch.image.repository' < "${prometheusValues}")
+  admissionWebhooksPatchTag=$(yq '.kube-prometheus-stack.prometheusOperator.admissionWebhooks.patch.image.tag' < "${prometheusValues}")
+  setAttributeInComponentPatchTemplate ".values.images.admissionWebhooksPatch" "${admissionWebhooksPatchRegistry}/${admissionWebhooksPatchRepo}:${admissionWebhooksPatchTag}"
 
+  local prometheusOperatorRegistry
+  local prometheusOperatorRepo
+  local prometheusOperatorTag
+  prometheusOperatorRegistry=$(yq '.kube-prometheus-stack.prometheusOperator.image.registry' < "${prometheusValues}")
+  prometheusOperatorRepo=$(yq '.kube-prometheus-stack.prometheusOperator.image.repository' < "${prometheusValues}")
+  prometheusOperatorTag=$(yq '.kube-prometheus-stack.prometheusOperator.image.tag' < "${prometheusValues}")
+  setAttributeInComponentPatchTemplate ".values.images.prometheusOperator" "${prometheusOperatorRegistry}/${prometheusOperatorRepo}:${prometheusOperatorTag}"
+
+  local configReloaderRegistry
+  local configReloaderRepo
+  local configReloaderTag
+  configReloaderRegistry=$(yq '.kube-prometheus-stack.prometheusOperator.prometheusConfigReloader.image.registry' < "${prometheusValues}")
+  configReloaderRepo=$(yq '.kube-prometheus-stack.prometheusOperator.prometheusConfigReloader.image.repository' < "${prometheusValues}")
+  configReloaderTag=$(yq '.kube-prometheus-stack.prometheusOperator.prometheusConfigReloader.image.tag' < "${prometheusValues}")
+  setAttributeInComponentPatchTemplate ".values.images.configReloader" "${configReloaderRegistry}/${configReloaderRepo}:${configReloaderTag}"
+
+  local prometheusServerRegistry
   local prometheusServerRepo
   local prometheusServerTag
-  prometheusServerRepo=$(yq '.prometheus.server.image.repository' < "${prometheusValues}")
-  prometheusServerTag=$(yq '.prometheus.server.image.tag' < "${prometheusValues}")
-  setAttributeInComponentPatchTemplate ".values.images.prometheusServer" "${prometheusServerRepo}:${prometheusServerTag}"
-
-  local configInitContainerImage
-  configInitContainerImage=$(yq '.prometheus.server.extraInitContainers[0].image' < "${prometheusValues}")
-  setAttributeInComponentPatchTemplate ".values.images.configInitContainer" "${configInitContainerImage}"
+  prometheusServerRegistry=$(yq '.kube-prometheus-stack.prometheus.prometheusSpec.image.registry' < "${prometheusValues}")
+  prometheusServerRepo=$(yq '.kube-prometheus-stack.prometheus.prometheusSpec.image.repository' < "${prometheusValues}")
+  prometheusServerTag=$(yq '.kube-prometheus-stack.prometheus.prometheusSpec.image.tag' < "${prometheusValues}")
+  setAttributeInComponentPatchTemplate ".values.images.prometheusServer" "${prometheusServerRegistry}/${prometheusServerRepo}:${prometheusServerTag}"
 
   # update version of sidecar-image in values.yaml
   yq -i ".kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image |= sub(\":(([0-9]+)\.([0-9]+)\.([0-9]+)((?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))|(?:\+[0-9A-Za-z-]+))?)\", \":${newReleaseVersion}\")" "${prometheusValues}"
 
-  local saProviderSidecarImage
-  saProviderSidecarImage=$(yq '.kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image' < "${prometheusValues}")
-  setAttributeInComponentPatchTemplate ".values.images.saProviderSidecar" "${saProviderSidecarImage}"
+  local authSidecarImage
+  authSidecarImage=$(yq '.kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image' < "${prometheusValues}")
+  setAttributeInComponentPatchTemplate ".values.images.authSidecar" "${authSidecarImage}"
 }
 
 setAttributeInComponentPatchTemplate() {

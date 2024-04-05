@@ -1,4 +1,4 @@
-module github.com/cloudogu/k8s-prometheus/serviceaccount
+module github.com/cloudogu/k8s-prometheus/auth
 
 go 1.22.0
 

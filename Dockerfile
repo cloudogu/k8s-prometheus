@@ -15,6 +15,7 @@ RUN go mod download
 COPY src/main.go main.go
 COPY src/configuration configuration
 COPY src/prometheus prometheus
+COPY src/proxy proxy
 COPY src/serviceaccount serviceaccount
 
 # Build
@@ -36,6 +37,7 @@ COPY --from=builder /workspace/target/k8s-prometheus-serviceaccount .
 # dockerfile_lint - ignore
 USER 65532:65532
 
+EXPOSE 8086
 EXPOSE 8087
 
 ENTRYPOINT ["/k8s-prometheus-serviceaccount"]

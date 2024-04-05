@@ -3,48 +3,65 @@ values:
   images:
     kubeStateMetrics: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1
     prometheusNodeExporter: quay.io/prometheus/node-exporter:v1.7.0
-    configmapReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.71.2
-    prometheusServer: quay.io/prometheus/prometheus:v2.50.1
-    configInitContainer: busybox:1.36
-    saProviderSidecar: k3ces.local:30099/k8s-prometheus:2.50.1-1
+    admissionWebhooksPatch: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6
+    prometheusOperator: quay.io/prometheus-operator/prometheus-operator:v0.72.0
+    configReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.72.0
+    prometheusServer: quay.io/prometheus/prometheus:v2.51.0
+    authSidecar: cloudogu/k8s-prometheus:2.50.1-1
 patches:
   values.yaml:
-    prometheus:
+    kube-prometheus-stack:
       kube-state-metrics:
-        enabled: true
         image:
           registry: "{{ registryFrom .images.kubeStateMetrics }}"
           repository: "{{ repositoryFrom .images.kubeStateMetrics }}"
           tag: "{{ tagFrom .images.kubeStateMetrics }}"
-      alertmanager:
-        enabled: false
       prometheus-node-exporter:
-        enabled: true
         image:
           registry: "{{ registryFrom .images.prometheusNodeExporter }}"
           repository: "{{ repositoryFrom .images.prometheusNodeExporter }}"
           tag: "{{ tagFrom .images.prometheusNodeExporter }}"
-      configmapReload:
-        prometheus:
-          image:
-            repository: "{{ registryFrom .images.configmapReloader }}/{{ repositoryFrom .images.configmapReloader }}"
-            tag: "{{ tagFrom .images.configmapReloader }}"
-      server:
+      prometheusOperator:
+        admissionWebhooks:
+          patch:
+            image:
+              registry: "{{ registryFrom .images.admissionWebhooksPatch }}"
+              repository: "{{ repositoryFrom .images.admissionWebhooksPatch }}"
+              tag: "{{ tagFrom .images.admissionWebhooksPatch }}"
         image:
-          repository: "{{ registryFrom .images.prometheusServer }}/{{ repositoryFrom .images.prometheusServer }}"
-          tag: "{{ tagFrom .images.prometheusServer }}"
-      sidecarContainers:
-        serviceaccount:
-          image: "{{ registryFrom .images.saProviderSidecar }}/{{ repositoryFrom .images.saProviderSidecar }}:{{ tagFrom .images.saProviderSidecar }}"
-      extraInitContainers:
-        - name: config-init
-          image: "{{ registryFrom .images.configInitContainer }}/{{ repositoryFrom .images.configInitContainer }}:{{ tagFrom .images.configInitContainer }}"
-          command:
-            - 'sh'
-            - '-c'
-            - 'cp -n /initial-config/web.config.yaml /config/web.config.yaml'
-          volumeMounts:
-            - name: ces-config
-              mountPath: /config
-            - name: initial-config
-              mountPath: /initial-config
+          registry: "{{ registryFrom .images.prometheusOperator }}"
+          repository: "{{ repositoryFrom .images.prometheusOperator }}"
+          tag: "{{ tagFrom .images.prometheusOperator }}"
+        prometheusConfigReloader:
+          image:
+            registry: "{{ registryFrom .images.configReloader }}"
+            repository: "{{ repositoryFrom .images.configReloader }}"
+            tag: "{{ tagFrom .images.configReloader }}"
+      prometheus:
+        prometheusSpec:
+          image:
+            registry: "{{ registryFrom .images.prometheusServer }}"
+            repository: "{{ repositoryFrom .images.prometheusServer }}"
+            tag: "{{ tagFrom .images.prometheusServer }}"
+          containers:
+            - name: auth
+              image: "{{ registryFrom .images.authSidecar }}/{{ repositoryFrom .images.authSidecar }}:{{ tagFrom .images.authSidecar }}"
+              imagePullPolicy: Always
+              env:
+                - name: PROMETHEUS_URL
+                  value: "http://localhost:9090"
+                - name: WEB_CONFIG_FILE
+                  value: "/config/web.config.yaml"
+                - name: API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: k8s-prometheus-service-account-api
+                      key: apiKey
+              ports:
+                - name: auth-proxy
+                  containerPort: 8086
+                - name: sa-provider
+                  containerPort: 8087
+              volumeMounts:
+                - name: ces-config
+                  mountPath: /config

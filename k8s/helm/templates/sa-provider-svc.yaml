@@ -1,7 +1,7 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: k8s-prometheus-service-account-provider
+  name: k8s-prometheus
   labels:
     app: ces
     app.kubernetes.io/name: k8s-prometheus
@@ -13,9 +13,14 @@ metadata:
     ces.cloudogu.com/serviceaccount-secret-key: "apiKey"
 spec:
   selector:
-    ces.cloudogu.com/serviceaccount-provider: k8s-prometheus
+    app: k8s-prometheus
+    k8s-prometheus: prometheus-server
   ports:
     - name: "sa-provider-sidecar"
       port: 8080
       protocol: TCP
-      targetPort: 8080
+      targetPort: sa-provider
+    - name: "prometheus-auth-proxy"
+      port: 9090
+      protocol: TCP
+      targetPort: auth-proxy

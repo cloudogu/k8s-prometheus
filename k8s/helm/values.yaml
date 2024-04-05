@@ -5,120 +5,75 @@ kube-prometheus-stack:
     enabled: false
   alertmanager:
     enabled: false
-
+  kube-state-metrics:
+    enabled: true
+    image:
+      registry: registry.k8s.io
+      repository: kube-state-metrics/kube-state-metrics
+      tag: "v2.10.1"
+  prometheus-node-exporter:
+    enabled: true
+    image:
+      registry: quay.io
+      repository: prometheus/node-exporter
+      tag: "v1.7.0"
   nameOverride: "k8s-prometheus"
+  prometheusOperator:
+    enabled: true
+    admissionWebhooks:
+      patch:
+        image:
+          registry: registry.k8s.io
+          repository: ingress-nginx/kube-webhook-certgen
+          tag: v20221220-controller-v1.5.1-58-g787ea74b6
+    image:
+      registry: quay.io
+      repository: prometheus-operator/prometheus-operator
+      tag: "v0.72.0"
+    prometheusConfigReloader:
+      image:
+        registry: quay.io
+        repository: prometheus-operator/prometheus-config-reloader
+        tag: "v0.72.0"
   prometheus:
     prometheusSpec:
-#      additionalArgs:
-#        - name: web.config.file
-#          value: "/etc/ces-config/web.config.yaml"
+      image:
+        registry: quay.io
+        repository: prometheus/prometheus
+        tag: v2.51.0
+      podMetadata:
+        labels:
+          app: k8s-prometheus
+          k8s-prometheus: prometheus-server
+      storageSpec:
+        volumeClaimTemplate:
+          spec:
+            resources:
+              requests:
+                storage: 1Gi
       volumes:
-      - name: ces-config
-        persistentVolumeClaim:
-          claimName: k8s-prometheus-config
-      - name: initial-config
-        configMap:
-          name: k8s-prometheus-initial-config
+        - name: ces-config
+          persistentVolumeClaim:
+            claimName: k8s-prometheus-config
       containers:
-      - name: serviceaccount
-        image: cloudogu/k8s-prometheus:2.50.1-1
-        imagePullPolicy: Always
-        env:
-          - name: WEB_CONFIG_FILE
-            value: "/config/web.config.yaml"
-          - name: API_KEY
-            valueFrom:
-              secretKeyRef:
-                name: k8s-prometheus-service-account-api
-                key: apiKey
-        ports:
-          - containerPort: 8087
-        volumeMounts:
-          - name: ces-config
-            mountPath: /config
-      initContainers:
-      - name: config-init
-        image: busybox:1.36
-        command:
-          - 'sh'
-          - '-c'
-          - 'cp -n /initial-config/web.config.yaml /config/web.config.yaml'
-        volumeMounts:
-          - name: ces-config
-            mountPath: /config
-          - name: initial-config
-            mountPath: /initial-config
-
-#prometheus:
-#  nameOverride: "k8s-prometheus"
-#  kube-state-metrics:
-#    enabled: true
-#    image:
-#      registry: registry.k8s.io
-#      repository: kube-state-metrics/kube-state-metrics
-#      tag: "v2.10.1"
-#  alertmanager:
-#    enabled: false
-#  prometheus-node-exporter:
-#    enabled: true
-#    image:
-#      registry: quay.io
-#      repository: prometheus/node-exporter
-#      tag: "v1.7.0"
-#  prometheus-pushgateway:
-#    enabled: false
-#  configmapReload:
-#    prometheus:
-#      image:
-#        repository: quay.io/prometheus-operator/prometheus-config-reloader
-#        tag: v0.71.2
-#  server:
-#    image:
-#      repository: quay.io/prometheus/prometheus
-#      tag: "v2.50.1"
-#    tcpSocketProbeEnabled: true
-#    extraArgs:
-#      web.config.file: /etc/ces-config/web.config.yaml
-#    extraVolumeMounts:
-#      - mountPath: /etc/ces-config
-#        name: ces-config
-#    podLabels:
-#      app: "ces"
-#      app.kubernetes.io/name: "k8s-prometheus"
-#      ces.cloudogu.com/serviceaccount-provider: "k8s-prometheus"
-#    extraVolumes:
-#      - name: ces-config
-#        persistentVolumeClaim:
-#          claimName: k8s-prometheus-config
-#      - name: initial-config
-#        configMap:
-#          name: k8s-prometheus-initial-config
-#    extraInitContainers:
-#      - name: config-init
-#        image: busybox:1.36
-#        command:
-#          - 'sh'
-#          - '-c'
-#          - 'cp -n /initial-config/web.config.yaml /config/web.config.yaml'
-#        volumeMounts:
-#          - name: ces-config
-#            mountPath: /config
-#          - name: initial-config
-#            mountPath: /initial-config
-#    sidecarContainers:
-#      serviceaccount:
-#        image: cloudogu/k8s-prometheus:2.50.1-1
-#        imagePullPolicy: Always
-#        env:
-#          - name: WEB_CONFIG_FILE
-#            value: "/config/web.config.yaml"
-#          - name: API_KEY
-#            valueFrom:
-#              secretKeyRef:
-#                name: k8s-prometheus-service-account-api
-#                key: apiKey
-#        ports:
-#          - containerPort: 8080
-#        volumeMounts:
-#          - name: ces-config
-#            mountPath: /config
+        - name: auth
+          image: cloudogu/k8s-prometheus:2.50.1-1
+          imagePullPolicy: Always
+          env:
+            - name: PROMETHEUS_URL
+              value: "http://localhost:9090"
+            - name: WEB_CONFIG_FILE
+              value: "/config/web.config.yaml"
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: k8s-prometheus-service-account-api
+                  key: apiKey
+          ports:
+            - name: auth-proxy
+              containerPort: 8086
+            - name: sa-provider
+              containerPort: 8087
+          volumeMounts:
+            - name: ces-config
+              mountPath: /config

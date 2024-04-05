@@ -31,6 +31,6 @@ helm-values-replace-image-repo: $(BINARY_YQ)
 	fi
 
 .PHONY: prometheus-release
-loki-release: ## Interactively starts the release workflow for loki
+loki-release: ## Interactively starts the release workflow for k8s-prometheus
 	@echo "Starting git flow release..."
-	@build/make/release.sh loki
+	@build/make/release.sh k8s-prometheus

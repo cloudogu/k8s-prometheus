@@ -18,23 +18,28 @@ func NewWebConfigReaderWriter(configFile string) *WebConfigReaderWriter {
 	return &WebConfigReaderWriter{configFile: configFile}
 }
 
-func (rw *WebConfigReaderWriter) ReadWebConfig() (WebConfig, error) {
-	var webConfig WebConfig
+func (rw *WebConfigReaderWriter) ReadWebConfig() (*WebConfig, error) {
+	var webConfig = WebConfig{BasicAuthUsers: make(map[string]string)}
 
 	webConfigFile, err := os.ReadFile(rw.configFile)
 	if err != nil {
-		return webConfig, fmt.Errorf("error reading web-config-file %s: %w", rw.configFile, err)
+		if os.IsNotExist(err) {
+			// use empty web-config
+			return &webConfig, nil
+		}
+
+		return nil, fmt.Errorf("error reading web-config-file %s: %w", rw.configFile, err)
 	}
 
 	if err := yaml.Unmarshal(webConfigFile, &webConfig); err != nil {
-		return webConfig, fmt.Errorf("error parsing web-config: %w", err)
+		return nil, fmt.Errorf("error parsing web-config: %w", err)
 	}
 
-	return webConfig, nil
+	return &webConfig, nil
 }
 
-func (rw *WebConfigReaderWriter) WriteWebConfig(webConfig WebConfig) error {
-	yamlData, err := yaml.Marshal(&webConfig)
+func (rw *WebConfigReaderWriter) WriteWebConfig(webConfig *WebConfig) error {
+	yamlData, err := yaml.Marshal(webConfig)
 	if err != nil {
 		return fmt.Errorf("error marshalling web-config: %w", err)
 	}
