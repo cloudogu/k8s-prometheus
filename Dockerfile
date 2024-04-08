@@ -20,18 +20,18 @@ COPY src/serviceaccount serviceaccount
 
 # Build
 RUN go mod vendor
-RUN go build -mod=vendor -o target/k8s-prometheus-serviceaccount
+RUN go build -mod=vendor -o target/k8s-prometheus-auth
 
 
 # Use distroless as minimal base image to package the manager binary
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 LABEL maintainer="hello@cloudogu.com" \
-      NAME="k8s-prometheus-serviceaccount" \
+      NAME="k8s-prometheus-auth" \
       VERSION="0.0.1"
 
 WORKDIR /
-COPY --from=builder /workspace/target/k8s-prometheus-serviceaccount .
+COPY --from=builder /workspace/target/k8s-prometheus-auth .
 
 # the linter has a problem with the valid colon-syntax
 # dockerfile_lint - ignore
@@ -40,4 +40,4 @@ USER 65532:65532
 EXPOSE 8086
 EXPOSE 8087
 
-ENTRYPOINT ["/k8s-prometheus-serviceaccount"]
+ENTRYPOINT ["/k8s-prometheus-auth"]
