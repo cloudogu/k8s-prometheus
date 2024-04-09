@@ -3,12 +3,12 @@ package main
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/cloudogu/k8s-prometheus/auth/configuration"
 	"github.com/cloudogu/k8s-prometheus/auth/prometheus"
 	"github.com/cloudogu/k8s-prometheus/auth/proxy"
 	"github.com/cloudogu/k8s-prometheus/auth/serviceaccount"
-	"log"
+	"github.com/gin-gonic/gin"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
@@ -19,24 +19,28 @@ import (
 func main() {
 	config, err := configuration.ReadConfigFromEnv()
 	if err != nil {
-		panic(err)
+		//panic(err)
 	}
+
+	gin.SetMode(gin.ReleaseMode)
+
+	configureLogger(config)
 
 	manager := prometheus.NewManager(config.WebConfigFile)
 
 	serviceAccountSrv := serviceaccount.CreateServer(config, manager)
 	go func() {
-		fmt.Printf("service-account-provider started on %s...\n", serviceAccountSrv.Addr)
+		slog.Info("service-account-provider started", "addr", serviceAccountSrv.Addr)
 		if err := serviceAccountSrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("listen: %s\n", err)
+			slog.Error("error starting service-account server.", "err", err)
 		}
 	}()
 
 	proxySrv := proxy.CreateServer(config, manager)
 	go func() {
-		fmt.Printf("auth-proxy started on %s...\n", proxySrv.Addr)
+		slog.Info("auth-proxy started", "addr", proxySrv.Addr)
 		if err := proxySrv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
-			log.Fatalf("listen: %s\n", err)
+			slog.Error("error starting auth-proxy server.", "err", err)
 		}
 	}()
 
@@ -44,26 +48,43 @@ func main() {
 	quit := make(chan os.Signal)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
-	log.Println("Shutdown Server ...")
+	slog.Info("Shutdown Server ...")
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
 	go func() {
 		if err := serviceAccountSrv.Shutdown(ctx); err != nil {
-			log.Fatal("Server Shutdown:", err)
+			slog.Error("error stopping service-account server.", "err", err)
 		}
 	}()
 
 	go func() {
 		if err := proxySrv.Shutdown(ctx); err != nil {
-			log.Fatal("Server Shutdown:", err)
+			slog.Error("error stopping auth-proxy server.", "err", err)
 		}
 	}()
 
 	select {
 	case <-ctx.Done():
-		log.Println("timeout of 5 seconds.")
+		slog.Info("shutdown-timeout of 5 seconds reached")
 	}
-	log.Println("exiting")
+	slog.Info("exiting")
+}
+
+func configureLogger(conf configuration.Configuration) {
+	var level slog.Level
+	var err = level.UnmarshalText([]byte(conf.LogLevel))
+	if err != nil {
+		slog.Error("error parsing log level. Setting log level to INFO.", "err", err)
+		level = slog.LevelInfo
+	}
+
+	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+		AddSource: false,
+		Level:     level,
+	}))
+	slog.SetDefault(logger)
+
+	slog.Info("configured logger", "level", level.String())
 }

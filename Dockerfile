@@ -4,19 +4,19 @@ FROM golang:1.22-alpine AS builder
 WORKDIR /workspace
 
 # Copy the Go Modules manifests
-COPY src/go.mod go.mod
-COPY src/go.sum go.sum
+COPY go.mod go.mod
+COPY go.sum go.sum
 
 # cache deps before building and copying source so that we don't need to re-download as much
 # and so that source changes don't invalidate our downloaded layer
 RUN go mod download
 
 # Copy the go source
-COPY src/main.go main.go
-COPY src/configuration configuration
-COPY src/prometheus prometheus
-COPY src/proxy proxy
-COPY src/serviceaccount serviceaccount
+COPY main.go main.go
+COPY configuration configuration
+COPY prometheus prometheus
+COPY proxy proxy
+COPY serviceaccount serviceaccount
 
 # Build
 RUN go mod vendor

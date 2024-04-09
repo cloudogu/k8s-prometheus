@@ -5,27 +5,32 @@ import (
 	"strings"
 )
 
+type WebConfigReaderWriter interface {
+	ReadWebConfig() (*WebConfig, error)
+	WriteWebConfig(webConfig *WebConfig) error
+}
+
 type Manager struct {
-	rw        *WebConfigReaderWriter
-	WebConfig *WebConfig
+	rw        WebConfigReaderWriter
+	webConfig *WebConfig
 }
 
 func NewManager(configFile string) *Manager {
-	return &Manager{rw: NewWebConfigReaderWriter(configFile)}
+	return &Manager{rw: NewWebConfigFileReaderWriter(configFile)}
 }
 
 func (m *Manager) getWebConfig() (*WebConfig, error) {
-	if m.WebConfig != nil {
-		return m.WebConfig, nil
+	if m.webConfig != nil {
+		return m.webConfig, nil
 	}
 
 	config, err := m.rw.ReadWebConfig()
 	if err != nil {
 		return nil, err
 	}
-	m.WebConfig = config
+	m.webConfig = config
 
-	return m.WebConfig, nil
+	return m.webConfig, nil
 }
 
 func (m *Manager) CreateServiceAccount(consumer string, params []string) (credentials map[string]string, err error) {

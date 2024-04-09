@@ -41,7 +41,7 @@ func (ctrl *Controller) CreateAccount(c *gin.Context) {
 		return
 	}
 
-	c.JSON(200, credentials)
+	c.JSON(http.StatusCreated, credentials)
 }
 
 func (ctrl *Controller) DeleteAccount(c *gin.Context) {

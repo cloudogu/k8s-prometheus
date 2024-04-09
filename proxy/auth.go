@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"log/slog"
 	"net/http"
 	"strings"
 )
@@ -16,7 +17,7 @@ func BasicAuth(av AccountValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username, password, err := decodeAuthHeader(c.Request.Header.Get("Authorization"))
 		if err != nil {
-			fmt.Printf("error decoding auth-header: %v\n", err)
+			slog.Error("error decoding auth-header", "err", err)
 			c.AbortWithStatus(http.StatusUnauthorized)
 			return
 		}

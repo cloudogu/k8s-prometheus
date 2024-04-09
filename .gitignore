@@ -3,4 +3,4 @@ target
 .bin
 .env
 k8s/helm/charts
-src/vendor
+vendor

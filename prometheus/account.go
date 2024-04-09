@@ -1,10 +1,9 @@
 package prometheus
 
 import (
-	"crypto/rand"
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
-	"math/big"
+	"math/rand/v2"
 )
 
 const usernameAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -32,17 +31,16 @@ func compareHashAndPassword(hashedPassword string, password string) error {
 }
 
 func generateRadomString(alphabet string, length int) string {
+	maxIndex := len(alphabet)
+
 	// Array to store randomly selected characters
-	var usernameBytes []byte
+	var randomStringBytes []byte
 	for i := 0; i < length; i++ {
 		// Select a random byte
-		randomIndex, err := rand.Int(rand.Reader, big.NewInt(int64(len(alphabet))))
-		if err != nil {
-			panic(err)
-		}
+		randomIndex := rand.IntN(maxIndex)
 		// Insert byte into the array
-		usernameBytes = append(usernameBytes, alphabet[randomIndex.Int64()])
+		randomStringBytes = append(randomStringBytes, alphabet[randomIndex])
 	}
 
-	return string(usernameBytes)
+	return string(randomStringBytes)
 }

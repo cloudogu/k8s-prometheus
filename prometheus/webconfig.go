@@ -2,7 +2,7 @@ package prometheus
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v2"
+	"gopkg.in/yaml.v3"
 	"os"
 )
 
@@ -10,15 +10,15 @@ type WebConfig struct {
 	BasicAuthUsers map[string]string `yaml:"basic_auth_users"`
 }
 
-type WebConfigReaderWriter struct {
+type WebConfigFileReaderWriter struct {
 	configFile string
 }
 
-func NewWebConfigReaderWriter(configFile string) *WebConfigReaderWriter {
-	return &WebConfigReaderWriter{configFile: configFile}
+func NewWebConfigFileReaderWriter(configFile string) *WebConfigFileReaderWriter {
+	return &WebConfigFileReaderWriter{configFile: configFile}
 }
 
-func (rw *WebConfigReaderWriter) ReadWebConfig() (*WebConfig, error) {
+func (rw *WebConfigFileReaderWriter) ReadWebConfig() (*WebConfig, error) {
 	var webConfig = WebConfig{BasicAuthUsers: make(map[string]string)}
 
 	webConfigFile, err := os.ReadFile(rw.configFile)
@@ -38,7 +38,7 @@ func (rw *WebConfigReaderWriter) ReadWebConfig() (*WebConfig, error) {
 	return &webConfig, nil
 }
 
-func (rw *WebConfigReaderWriter) WriteWebConfig(webConfig *WebConfig) error {
+func (rw *WebConfigFileReaderWriter) WriteWebConfig(webConfig *WebConfig) error {
 	yamlData, err := yaml.Marshal(webConfig)
 	if err != nil {
 		return fmt.Errorf("error marshalling web-config: %w", err)
