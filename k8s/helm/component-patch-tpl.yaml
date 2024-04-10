@@ -7,7 +7,7 @@ values:
     prometheusOperator: quay.io/prometheus-operator/prometheus-operator:v0.72.0
     configReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.72.0
     prometheusServer: quay.io/prometheus/prometheus:v2.51.0
-    authSidecar: cloudogu/k8s-prometheus:2.50.1-1
+    authSidecar: cloudogu/k8s-prometheus-auth:2.50.1-1
 patches:
   values.yaml:
     kube-prometheus-stack:

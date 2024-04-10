@@ -57,7 +57,7 @@ kube-prometheus-stack:
             claimName: k8s-prometheus-config
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus:2.50.1-1
+          image: cloudogu/k8s-prometheus-auth:2.50.1-1
           imagePullPolicy: Always
           env:
             - name: PROMETHEUS_URL

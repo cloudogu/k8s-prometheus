@@ -8,7 +8,7 @@ LINT_VERSION?=v1.57.2
 .DEFAULT_GOAL:=help
 
 IMAGE?=cloudogu/${ARTIFACT_ID}-service-account-provider:${VERSION}
-IMAGE_DEV?=${K3CES_REGISTRY_URL_PREFIX}/${ARTIFACT_ID}-service-account-provider
+IMAGE_DEV?=${K3CES_REGISTRY_URL_PREFIX}/${ARTIFACT_ID}-auth
 IMAGE_IMPORT_TARGET=image-import
 K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
 HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo
