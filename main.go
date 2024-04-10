@@ -19,7 +19,7 @@ import (
 func main() {
 	config, err := configuration.ReadConfigFromEnv()
 	if err != nil {
-		//panic(err)
+		panic(err)
 	}
 
 	gin.SetMode(gin.ReleaseMode)
@@ -45,7 +45,7 @@ func main() {
 	}()
 
 	// Wait for interrupt signal to gracefully shut down the server with a timeout of 5 seconds.
-	quit := make(chan os.Signal)
+	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	slog.Info("Shutdown Server ...")
@@ -54,21 +54,21 @@ func main() {
 	defer cancel()
 
 	go func() {
+		slog.Info("stopping service-account server")
 		if err := serviceAccountSrv.Shutdown(ctx); err != nil {
 			slog.Error("error stopping service-account server.", "err", err)
 		}
 	}()
 
 	go func() {
+		slog.Info("stopping auth-proxy server")
 		if err := proxySrv.Shutdown(ctx); err != nil {
 			slog.Error("error stopping auth-proxy server.", "err", err)
 		}
 	}()
 
-	select {
-	case <-ctx.Done():
-		slog.Info("shutdown-timeout of 5 seconds reached")
-	}
+	<-ctx.Done()
+	slog.Info("shutdown-timeout of 5 seconds reached")
 	slog.Info("exiting")
 }
 
