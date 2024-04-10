@@ -42,7 +42,7 @@ Die Komponente kann über das Feld `spec.valuesYamlOverwrite`.
 Die Konfigurationsmöglichkeiten entsprechen denen vom [kube-prometheus-stack](https://github.com/prometheus-community/helm-charts/blob/main/charts/kube-prometheus-stack/values.yaml).
 Die Konfiguration für das "kube-prometheus-stack" Helm-Chart muss in der `values.yaml` unter dem Key `kube-prometheus-stack` abgelegt werden.
 
-**Beispiel:**
+#### Example valuesYamlOverwrite:
 ```yaml
 apiVersion: k8s.cloudogu.com/v1
 kind: Component
@@ -64,5 +64,14 @@ spec:
                 resources:
                   requests:
                     storage: 8Gi
+          retention: 20d
 ```
 
+### Storage & Retention
+Prometheus speichert alle Metriken im Volume des zugehörigen StatefulSet. 
+Die Größe des Volumes kann in den values unter `kube-prometheus-stack.prometheus.promtheusSpec.storageSpec` angegeben werden (siehe [Beispiel oben](#example-valuesyamloverwrite)).
+Die Default-Größe des Volumes ist `4Gi` (4 Gigabyte).
+
+Die Retention gibt an für welchen Zeitraum die Metriken gespeichert werden sollen.
+Dies kann in den values unter `kube-prometheus-stack.prometheus.promtheusSpec.retention` angegeben werden (siehe [Beispiel oben](#beispiel-valuesyamloverwrite)).
+Der Default-Wert für die Rentention ist `10d` (10 Tage).

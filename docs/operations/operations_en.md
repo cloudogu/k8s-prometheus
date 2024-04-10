@@ -64,5 +64,14 @@ spec:
                 resources:
                   requests:
                     storage: 8Gi
+          retention: 20d
 ```
 
+### Storage & Retention
+Prometheus stores all metrics in the volume of the associated StatefulSet.
+The size of the volume can be specified in the values under `kube-prometheus-stack.prometheus.promtheusSpec.storageSpec` (see [example above](#example-valuesyamloverwrite)).
+The default size of the volume is `4Gi` (4 gigabytes).
+
+The retention specifies the period for which the metrics are to be saved.
+This can be specified in the values under `kube-prometheus-stack.prometheus.promtheusSpec.retention` (see [example above](#example-valuesyamloverwrite)).
+The default value for retention is `10d` (10 days).

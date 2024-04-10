@@ -51,6 +51,7 @@ kube-prometheus-stack:
             resources:
               requests:
                 storage: 4Gi
+      retention: 10d
       volumes:
         - name: ces-config
           persistentVolumeClaim:
