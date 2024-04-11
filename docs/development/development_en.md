@@ -81,6 +81,11 @@ The following environment variables can be configured:
 ## Development in the local CES cluster
 To test the `k8s-prometheus` component in the local CES cluster, the following make targets can be used:
 
+Initial, so that the component can be installed:
+```bash
+make helm-update-dependencies
+```
+
 ```bash
 # Installs k8s-prometheus in the cluster
 make component-apply
