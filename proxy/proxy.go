@@ -3,13 +3,12 @@ package proxy
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"net/http"
 	"net/http/httputil"
 	"net/url"
 )
 
 type Controller struct {
-	prometheusUrl *url.URL
+	proxy *httputil.ReverseProxy
 }
 
 func NewController(prometheusUrl string) (*Controller, error) {
@@ -18,18 +17,11 @@ func NewController(prometheusUrl string) (*Controller, error) {
 		return nil, fmt.Errorf("error parsing proxy-url: %w", err)
 	}
 
-	return &Controller{prometheusUrl: proxyUrl}, nil
+	proxy := httputil.NewSingleHostReverseProxy(proxyUrl)
+
+	return &Controller{proxy: proxy}, nil
 }
 
 func (ctrl *Controller) Proxy(c *gin.Context) {
-	proxy := httputil.NewSingleHostReverseProxy(ctrl.prometheusUrl)
-	proxy.Director = func(req *http.Request) {
-		req.Header = c.Request.Header
-		req.Host = ctrl.prometheusUrl.Host
-		req.URL.Scheme = ctrl.prometheusUrl.Scheme
-		req.URL.Host = ctrl.prometheusUrl.Host
-		req.URL.Path = c.Param("proxyPath")
-	}
-
-	proxy.ServeHTTP(c.Writer, c.Request)
+	ctrl.proxy.ServeHTTP(c.Writer, c.Request)
 }

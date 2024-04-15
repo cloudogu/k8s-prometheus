@@ -9,11 +9,11 @@ import (
 	"strings"
 )
 
-type AccountValidator interface {
+type accountValidator interface {
 	ValidateAccount(username string, password string) error
 }
 
-func BasicAuth(av AccountValidator) gin.HandlerFunc {
+func BasicAuth(av accountValidator) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		username, password, err := decodeAuthHeader(c.Request.Header.Get("Authorization"))
 		if err != nil {
@@ -48,5 +48,5 @@ func decodeAuthHeader(authHeader string) (string, string, error) {
 		return "", "", fmt.Errorf("error extracting user/password from auth-header")
 	}
 
-	return auth[0], auth[1], err
+	return auth[0], auth[1], nil
 }

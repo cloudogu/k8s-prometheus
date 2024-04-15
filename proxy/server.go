@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func CreateServer(config configuration.Configuration, av AccountValidator) *http.Server {
+func CreateServer(config configuration.Configuration, av accountValidator) *http.Server {
 	r := gin.Default()
 
 	r.Use(BasicAuth(av))

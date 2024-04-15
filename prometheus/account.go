@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"golang.org/x/crypto/bcrypt"
 	"math/rand/v2"
+	"strings"
 )
 
 const usernameAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -31,16 +32,18 @@ func compareHashAndPassword(hashedPassword string, password string) error {
 }
 
 func generateRadomString(alphabet string, length int) string {
+	runeSlice := []rune(alphabet)
 	maxIndex := len(alphabet)
 
 	// Array to store randomly selected characters
-	var randomStringBytes []byte
+	sb := strings.Builder{}
+	sb.Grow(length)
 	for i := 0; i < length; i++ {
 		// Select a random byte
 		randomIndex := rand.IntN(maxIndex)
 		// Insert byte into the array
-		randomStringBytes = append(randomStringBytes, alphabet[randomIndex])
+		sb.WriteRune(runeSlice[randomIndex])
 	}
 
-	return string(randomStringBytes)
+	return sb.String()
 }

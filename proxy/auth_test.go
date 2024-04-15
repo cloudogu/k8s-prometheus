@@ -11,7 +11,7 @@ import (
 
 func Test_BasicAuth(t *testing.T) {
 	t.Run("should successfully check basic auth user", func(t *testing.T) {
-		mockAv := NewMockAccountValidator(t)
+		mockAv := NewMockaccountValidator(t)
 		mockAv.EXPECT().ValidateAccount("user", "password").Return(nil)
 
 		w := httptest.NewRecorder()
@@ -29,7 +29,7 @@ func Test_BasicAuth(t *testing.T) {
 	})
 
 	t.Run("should fail to check basic auth user for error in validation", func(t *testing.T) {
-		mockAv := NewMockAccountValidator(t)
+		mockAv := NewMockaccountValidator(t)
 		mockAv.EXPECT().ValidateAccount("user", "password").Return(assert.AnError)
 
 		w := httptest.NewRecorder()
@@ -49,7 +49,7 @@ func Test_BasicAuth(t *testing.T) {
 	})
 
 	t.Run("should fail to check basic auth user for error decoding auth-header", func(t *testing.T) {
-		mockAv := NewMockAccountValidator(t)
+		mockAv := NewMockaccountValidator(t)
 
 		w := httptest.NewRecorder()
 		c, _ := gin.CreateTestContext(w)

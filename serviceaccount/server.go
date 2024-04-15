@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func CreateServer(config configuration.Configuration, manager Manager) *http.Server {
+func CreateServer(config configuration.Configuration, manager manager) *http.Server {
 	r := gin.Default()
 
 	serviceAccountCtrl := NewController(manager)

@@ -7,6 +7,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"net/http"
 	"net/http/httptest"
+	"net/http/httputil"
 	"testing"
 )
 
@@ -15,7 +16,7 @@ func Test_NewController(t *testing.T) {
 		ctrl, err := NewController("http://localhost:9090")
 
 		require.NoError(t, err)
-		assert.Equal(t, "http://localhost:9090", ctrl.prometheusUrl.String())
+		assert.IsType(t, &httputil.ReverseProxy{}, ctrl.proxy)
 	})
 
 	t.Run("should fail to create new controller for error in url parsing", func(t *testing.T) {
@@ -27,7 +28,7 @@ func Test_NewController(t *testing.T) {
 }
 
 func Test_Proxy(t *testing.T) {
-	t.Run("should successfully create new controller", func(t *testing.T) {
+	t.Run("should proxy request", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		c, ginEngine := gin.CreateTestContext(w)
 

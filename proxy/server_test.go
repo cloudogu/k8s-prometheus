@@ -10,7 +10,7 @@ import (
 
 func Test_CreateServer(t *testing.T) {
 	t.Run("should successfully create new controller", func(t *testing.T) {
-		mockAv := NewMockAccountValidator(t)
+		mockAv := NewMockaccountValidator(t)
 		conf := configuration.Configuration{PrometheusUrl: "http://localhost:9090"}
 
 		srv := CreateServer(conf, mockAv)
@@ -41,7 +41,7 @@ func Test_CreateServer(t *testing.T) {
 	})
 
 	t.Run("should panic while creating new controller for error in prometheus url", func(t *testing.T) {
-		mockAv := NewMockAccountValidator(t)
+		mockAv := NewMockaccountValidator(t)
 		conf := configuration.Configuration{PrometheusUrl: "+:/foo-bar"}
 
 		assert.Panics(t, func() {

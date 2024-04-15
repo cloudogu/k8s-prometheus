@@ -5,16 +5,16 @@ import (
 	"net/http"
 )
 
-type Manager interface {
+type manager interface {
 	CreateServiceAccount(consumer string, params []string) (credentials map[string]string, err error)
 	DeleteServiceAccount(consumer string) error
 }
 
 type Controller struct {
-	manager Manager
+	manager manager
 }
 
-func NewController(manager Manager) *Controller {
+func NewController(manager manager) *Controller {
 	return &Controller{manager: manager}
 }
 

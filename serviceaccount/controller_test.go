@@ -12,7 +12,7 @@ import (
 
 func Test_NewController(t *testing.T) {
 	t.Run("should successfully create new controller", func(t *testing.T) {
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 
 		ctrl := NewController(mockManager)
 
@@ -28,7 +28,7 @@ func Test_CreateAccount(t *testing.T) {
 		require.NoError(t, err)
 		ginCtx.Request = req
 
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 		mockManager.EXPECT().CreateServiceAccount("grafana", []string{"a", "b", "c"}).Return(map[string]string{"username": "user", "password": "password"}, nil)
 
 		ctrl := NewController(mockManager)
@@ -46,7 +46,7 @@ func Test_CreateAccount(t *testing.T) {
 		require.NoError(t, err)
 		ginCtx.Request = req
 
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 
 		ctrl := NewController(mockManager)
 
@@ -63,7 +63,7 @@ func Test_CreateAccount(t *testing.T) {
 		require.NoError(t, err)
 		ginCtx.Request = req
 
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 
 		ctrl := NewController(mockManager)
 
@@ -80,7 +80,7 @@ func Test_CreateAccount(t *testing.T) {
 		require.NoError(t, err)
 		ginCtx.Request = req
 
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 		mockManager.EXPECT().CreateServiceAccount("grafana", []string{"a", "b", "c"}).Return(nil, assert.AnError)
 
 		ctrl := NewController(mockManager)
@@ -101,7 +101,7 @@ func Test_DeleteAccount(t *testing.T) {
 		ginCtx.Request = req
 		ginCtx.AddParam("consumer", "grafana")
 
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 		mockManager.EXPECT().DeleteServiceAccount("grafana").Return(nil)
 
 		ctrl := NewController(mockManager)
@@ -120,7 +120,7 @@ func Test_DeleteAccount(t *testing.T) {
 		require.NoError(t, err)
 		ginCtx.Request = req
 
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 
 		ctrl := NewController(mockManager)
 
@@ -138,7 +138,7 @@ func Test_DeleteAccount(t *testing.T) {
 		ginCtx.Request = req
 		ginCtx.AddParam("consumer", "grafana")
 
-		mockManager := NewMockManager(t)
+		mockManager := NewMockmanager(t)
 		mockManager.EXPECT().DeleteServiceAccount("grafana").Return(assert.AnError)
 
 		ctrl := NewController(mockManager)
