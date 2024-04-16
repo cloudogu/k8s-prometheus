@@ -1,0 +1,67 @@
+apiVersion: v1
+values:
+  images:
+    kubeStateMetrics: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1
+    prometheusNodeExporter: quay.io/prometheus/node-exporter:v1.7.0
+    admissionWebhooksPatch: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6
+    prometheusOperator: quay.io/prometheus-operator/prometheus-operator:v0.72.0
+    configReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.72.0
+    prometheusServer: quay.io/prometheus/prometheus:v2.51.0
+    authSidecar: cloudogu/k8s-prometheus-auth:57.1.1-1
+patches:
+  values.yaml:
+    kube-prometheus-stack:
+      kube-state-metrics:
+        image:
+          registry: "{{ registryFrom .images.kubeStateMetrics }}"
+          repository: "{{ repositoryFrom .images.kubeStateMetrics }}"
+          tag: "{{ tagFrom .images.kubeStateMetrics }}"
+      prometheus-node-exporter:
+        image:
+          registry: "{{ registryFrom .images.prometheusNodeExporter }}"
+          repository: "{{ repositoryFrom .images.prometheusNodeExporter }}"
+          tag: "{{ tagFrom .images.prometheusNodeExporter }}"
+      prometheusOperator:
+        admissionWebhooks:
+          patch:
+            image:
+              registry: "{{ registryFrom .images.admissionWebhooksPatch }}"
+              repository: "{{ repositoryFrom .images.admissionWebhooksPatch }}"
+              tag: "{{ tagFrom .images.admissionWebhooksPatch }}"
+        image:
+          registry: "{{ registryFrom .images.prometheusOperator }}"
+          repository: "{{ repositoryFrom .images.prometheusOperator }}"
+          tag: "{{ tagFrom .images.prometheusOperator }}"
+        prometheusConfigReloader:
+          image:
+            registry: "{{ registryFrom .images.configReloader }}"
+            repository: "{{ repositoryFrom .images.configReloader }}"
+            tag: "{{ tagFrom .images.configReloader }}"
+      prometheus:
+        prometheusSpec:
+          image:
+            registry: "{{ registryFrom .images.prometheusServer }}"
+            repository: "{{ repositoryFrom .images.prometheusServer }}"
+            tag: "{{ tagFrom .images.prometheusServer }}"
+          containers:
+            - name: auth
+              image: "{{ registryFrom .images.authSidecar }}/{{ repositoryFrom .images.authSidecar }}:{{ tagFrom .images.authSidecar }}"
+              imagePullPolicy: Always
+              env:
+                - name: PROMETHEUS_URL
+                  value: "http://localhost:9090"
+                - name: WEB_CONFIG_FILE
+                  value: "/config/web.config.yaml"
+                - name: API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: k8s-prometheus-service-account-api
+                      key: apiKey
+              ports:
+                - name: auth-proxy
+                  containerPort: 8086
+                - name: sa-provider
+                  containerPort: 8087
+              volumeMounts:
+                - name: ces-config
+                  mountPath: /config

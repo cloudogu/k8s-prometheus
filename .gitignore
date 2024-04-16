@@ -1,0 +1,6 @@
+.idea
+target
+.bin
+.env
+k8s/helm/charts
+vendor
