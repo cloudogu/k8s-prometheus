@@ -11,16 +11,17 @@ import (
 	"testing"
 )
 
-func Test_NewController(t *testing.T) {
+func Test_NewProxy(t *testing.T) {
 	t.Run("should successfully create new controller", func(t *testing.T) {
-		ctrl, err := NewController("http://localhost:9090")
+		proxy, err := NewProxy("http://localhost:9090")
 
 		require.NoError(t, err)
-		assert.IsType(t, &httputil.ReverseProxy{}, ctrl.proxy)
+		assert.NotNil(t, proxy)
+		assert.IsType(t, &httputil.ReverseProxy{}, proxy)
 	})
 
 	t.Run("should fail to create new controller for error in url parsing", func(t *testing.T) {
-		_, err := NewController("+:/''#someßThing")
+		_, err := NewProxy("+:/''#someßThing")
 
 		require.Error(t, err)
 		assert.ErrorContains(t, err, "error parsing proxy-url: ")
@@ -48,10 +49,10 @@ func Test_Proxy(t *testing.T) {
 		getReq.Header.Set("Foo", "bar")
 		c.Request = getReq
 
-		ctrl, err := NewController(testSrv.URL)
+		proxy, err := NewProxy(testSrv.URL)
 		require.NoError(t, err)
 
-		ginEngine.GET("/*proxyPath", ctrl.Proxy)
+		ginEngine.GET("/*proxyPath", gin.WrapH(proxy))
 
 		ginEngine.ServeHTTP(w, getReq)
 

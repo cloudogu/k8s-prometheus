@@ -10,12 +10,12 @@ func CreateServer(config configuration.Configuration, av accountValidator) *http
 	r := gin.Default()
 
 	r.Use(BasicAuth(av))
-	proxyCtrl, err := NewController(config.PrometheusUrl)
+	proxy, err := NewProxy(config.PrometheusUrl)
 	if err != nil {
 		panic(err)
 	}
 
-	r.Any("/*proxyPath", proxyCtrl.Proxy)
+	r.Any("/*proxyPath", gin.WrapH(proxy))
 
 	return &http.Server{
 		Addr:    ":8086",
