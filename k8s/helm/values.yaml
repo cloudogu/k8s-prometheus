@@ -13,6 +13,12 @@ kube-prometheus-stack:
       tag: "v2.10.1"
   prometheus-node-exporter:
     enabled: true
+    prometheus:
+      monitor:
+        enabled: true
+        relabelings:
+          - sourceLabels: [ __meta_kubernetes_endpoint_node_name ]
+            targetLabel: node
     image:
       registry: quay.io
       repository: prometheus/node-exporter
