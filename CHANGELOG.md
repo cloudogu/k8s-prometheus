@@ -7,5 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v57.1.1-2] - 2024-04-23
+### Added
+- [#2] Add missing 'node' labels for metrics from node-exporter
+
 ## [v57.1.1-1] - 2024-04-16
 - initial release

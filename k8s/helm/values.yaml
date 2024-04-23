@@ -13,6 +13,12 @@ kube-prometheus-stack:
       tag: "v2.10.1"
   prometheus-node-exporter:
     enabled: true
+    prometheus:
+      monitor:
+        enabled: true
+        relabelings:
+          - sourceLabels: [__meta_kubernetes_endpoint_node_name]
+            targetLabel: node
     image:
       registry: quay.io
       repository: prometheus/node-exporter
@@ -58,7 +64,7 @@ kube-prometheus-stack:
             claimName: k8s-prometheus-config
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:57.1.1-1
+          image: cloudogu/k8s-prometheus-auth:57.1.1-2
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
