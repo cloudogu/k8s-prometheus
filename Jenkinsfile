@@ -26,7 +26,7 @@ goVersion = "1.22"
 helmTargetDir = "target/k8s"
 helmChartDir = "${helmTargetDir}/helm"
 
-imageRepository = "cloudogu/${repositoryName}-service-account-provider"
+imageRepository = "cloudogu/${repositoryName}-auth"
 
 node('docker') {
     timestamps {
