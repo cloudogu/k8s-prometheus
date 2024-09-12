@@ -39,7 +39,10 @@ func (m *Manager) CreateServiceAccount(consumer string, params []string) (creden
 		return nil, err
 	}
 
-	username, password := createNewAccount(consumer)
+	username, password, err := createNewAccount(consumer)
+	if err != nil {
+		return nil, err
+	}
 	hashedPassword, err := hashPassword(password)
 	if err != nil {
 		return nil, err
