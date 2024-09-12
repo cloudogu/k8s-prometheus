@@ -1,5 +1,5 @@
 #!groovy
-@Library('github.com/cloudogu/ces-build-lib@2.2.1')
+@Library('github.com/cloudogu/ces-build-lib@2.3.1')
 import com.cloudogu.ces.cesbuildlib.*
 
 git = new Git(this, "cesmarvin")
