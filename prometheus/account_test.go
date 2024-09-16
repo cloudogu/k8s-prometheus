@@ -10,13 +10,15 @@ import (
 
 func Test_createNewAccount(t *testing.T) {
 	t.Run("should create new account for consumer", func(t *testing.T) {
-		username, password := createNewAccount("myConsumer")
+		username, password, err := createNewAccount("myConsumer")
+		require.NoError(t, err)
 
 		assert.Len(t, username, 19)
 		assert.True(t, strings.HasPrefix(username, "myConsumer-"))
 		assert.Len(t, password, 24)
 
-		username2, password2 := createNewAccount("myConsumer")
+		username2, password2, err := createNewAccount("myConsumer")
+		require.NoError(t, err)
 
 		assert.NotEqual(t, username, username2)
 		assert.Len(t, username2, 19)
@@ -66,7 +68,8 @@ func Test_CompareHashAndPassword(t *testing.T) {
 
 func Test_GenerateRandomString(t *testing.T) {
 	t.Run("should generate string for alphabet", func(t *testing.T) {
-		randomString := generateRadomString("abc", 5)
+		randomString, err := generateRadomString("abc", 5)
+		require.NoError(t, err)
 
 		require.Len(t, randomString, 5)
 		assert.True(t, strings.ContainsAny(randomString, "abc"))
