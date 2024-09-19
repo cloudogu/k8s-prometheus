@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v57.1.1-5] - 2024-09-19
+### Changed
+- Relicense to AGPL-3.0-only
+
 ## [v57.1.1-4] - 2024-09-16
 ### Fixed
 - [#6] Use `crypto/rand` instead of `math/rand` for generating passwords.

@@ -1,6 +1,6 @@
 ARTIFACT_ID=k8s-prometheus
 MAKEFILES_VERSION=9.2.1
-VERSION=57.1.1-4
+VERSION=57.1.1-5
 
 GOTAG=1.22.1
 MOCKERY_VERSION=v2.42.2
@@ -40,7 +40,7 @@ helm-values-replace-image-repo: $(BINARY_YQ)
 	fi
 
 .PHONY: prometheus-release
-prometheus-release: ## Interactively starts the release workflow for k8s-prometheus
+prometheus-release: ${BINARY_YQ} ## Interactively starts the release workflow for k8s-prometheus
 	@echo "Starting git flow release..."
 	@build/make/release.sh k8s-prometheus
 
