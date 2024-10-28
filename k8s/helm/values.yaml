@@ -1,3 +1,6 @@
+global:
+  imagePullSecrets:
+    - "ces-container-registries"
 kube-prometheus-stack:
   grafana:
     enabled: false
