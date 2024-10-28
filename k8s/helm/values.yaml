@@ -1,3 +1,6 @@
+global:
+  imagePullSecrets:
+    - "ces-container-registries"
 kube-prometheus-stack:
   grafana:
     enabled: false
@@ -64,7 +67,7 @@ kube-prometheus-stack:
             claimName: k8s-prometheus-config
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:57.1.1-5
+          image: cloudogu/k8s-prometheus-auth:57.1.1-6
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL

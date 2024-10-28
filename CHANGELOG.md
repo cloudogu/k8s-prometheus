@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v57.1.1-6] - 2024-10-28
+### Changed
+- [#10] Use `ces-container-registries` secret for pulling container images as default.
+
 ## [v57.1.1-5] - 2024-09-19
 ### Changed
 - Relicense to AGPL-3.0-only
