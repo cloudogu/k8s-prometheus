@@ -1,10 +1,8 @@
 {{- if .Values.networkPolicies.enabled }}
----
-#
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "kube-prometheus-stack.name" . }}-allow-service-accounts
+  name: {{ include "kube-prometheus-stack.name" . }}-prometheus-allow-component-operator
 spec:
   podSelector:
     matchLabels:
@@ -13,7 +11,9 @@ spec:
     - Ingress
   ingress:
     - from:
-        - namespaceSelector: { }
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: k8s-dogu-operator
       ports:
         - port: 8086
           protocol: TCP
