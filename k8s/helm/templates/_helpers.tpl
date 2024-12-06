@@ -2,12 +2,32 @@
 {{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
 {{- end }}
 
+{{/* All-in-one labels */}}
+{{- define "k8s-prometheus.labels" -}}
+app: ces
+helm.sh/chart: {{- printf " %s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+k8s.cloudogu.com/component.name: {{ include "k8s-prometheus.name" . }}
+k8s.cloudogu.com/component.version: {{ .Chart.AppVersion | quote }}
+{{- end -}}
+
+{{- define "prometheus.server.labels" -}}
+{{- include "k8s-prometheus.labels" . | nindent 2 }}
+{{- include "prometheus.server.selectorLabels" . | nindent 2 }}
+{{- end -}}
+
 {{- define "prometheus.server.selectorLabels" -}}
 {{- with get .Values "kube-prometheus-stack" -}}
 {{- with .prometheus.prometheusSpec.podMetadata.labels -}}
 {{ toYaml . }}
 {{- end -}}
 {{- end -}}
+{{- end -}}
+
+{{- define "prometheus.node-exporter.labels" -}}
+{{- include "k8s-prometheus.labels" . | nindent 2 }}
+{{- include "prometheus.node-exporter.selectorLabels" . | nindent 2 }}
 {{- end -}}
 
 {{- define "prometheus.node-exporter.selectorLabels" -}}

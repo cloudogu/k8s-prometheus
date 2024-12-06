@@ -3,6 +3,8 @@ apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
   name: {{ include "kube-prometheus-stack.name" . }}-prometheus-allow-component-operator
+  labels:
+    {{- include "prometheus.server.labels" . | nindent 4 }}
 spec:
   podSelector:
     matchLabels:
