@@ -39,3 +39,14 @@ k8s.cloudogu.com/component.version: {{ .Chart.AppVersion | quote }}
 {{- end -}}
 {{- end -}}
 {{- end -}}
+
+{{- define "prometheus.kube-state-metrics.labels" -}}
+{{- include "k8s-prometheus.labels" . | nindent 2 }}
+{{- include "prometheus.kube-state-metrics.selectorLabels" . | nindent 2 }}
+{{- end -}}
+
+{{- define "prometheus.kube-state-metrics.selectorLabels" -}}
+app.kubernetes.io/name: kube-state-metrics
+app.kubernetes.io/instance: k8s-prometheus
+{{- end -}}
+
