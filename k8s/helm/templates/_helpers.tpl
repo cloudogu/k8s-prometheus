@@ -50,3 +50,17 @@ app.kubernetes.io/name: kube-state-metrics
 app.kubernetes.io/instance: k8s-prometheus
 {{- end -}}
 
+{{- define "prometheus.operator.labels" -}}
+{{ template "prometheus.operator.selectorLabels" . }}
+{{ template "k8s-prometheus.labels" . }}
+{{- end -}}
+
+{{- define "prometheus.operator.selectorLabels" -}}
+app: {{ template "kube-prometheus-stack.name" . }}-operator
+app.kubernetes.io/name: {{ template "kube-prometheus-stack.name" . }}-prometheus-operator
+app.kubernetes.io/component: prometheus-operator
+{{- end -}}
+
+
+
+
