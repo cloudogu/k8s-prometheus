@@ -1,5 +1,9 @@
 {{- define "k8s-prometheus.name" -}}
-{{- default .Chart.Name .Values.nameOverride | trunc 63 | trimSuffix "-" }}
+{{$name := .Chart.Name}}
+{{- with get .Values "kube-prometheus-stack" -}}
+{{$override := .nameOverride}}
+{{- default $name $override | trunc 63 | trimSuffix "-" }}
+{{- end }}
 {{- end }}
 
 {{/* All-in-one labels */}}
