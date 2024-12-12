@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v57.1.1-7] - 2024-12-12
+### Added
+- [#14] add network policies for prometheus and kube-stack-promotheus related components
+
+### Fixed
+- [#12] building component locally by using component-apply target possible again.
+
 ## [v57.1.1-6] - 2024-10-28
 ### Changed
 - [#10] Use `ces-container-registries` secret for pulling container images as default.
