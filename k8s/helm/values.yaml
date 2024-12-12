@@ -1,3 +1,5 @@
+networkPolicies:
+  enabled: true
 global:
   imagePullSecrets:
     - "ces-container-registries"
@@ -54,6 +56,7 @@ kube-prometheus-stack:
         labels:
           app: k8s-prometheus
           k8s-prometheus: prometheus-server
+          k8s.cloudogu.com/component.name: k8s-prometheus
       storageSpec:
         volumeClaimTemplate:
           spec:
