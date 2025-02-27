@@ -8,6 +8,8 @@ In this use-case, we may have multiple CES-instances and want to collect their m
 
 You can do this for as many CES-instances as you like.
 
+Files for testing this scenario can be found in the `samples` folder.
+
 ### Configure CES-Prometheus
 
 First we'll have to expose our CES-Prometheus to outside the cluster.
@@ -73,4 +75,15 @@ You can then append a snippet like this to the `prometheus.yaml` of your central
     basic_auth:
       username: 'prometheus-exposed'
       password_file: '/path/to/your/password-file'
+```
+
+### Test federation
+
+If you configured your local ecosystem (running at `192.168.56.2`) with the auth-presets from the `samples` folder,
+you can then start a Prometheus in docker with federation enabled using the following command: 
+```shell
+docker run \
+    -p 9090:9090 \
+    -v $(pwd)/samples/prometheus.yaml:/etc/prometheus/prometheus.yml \
+    prom/prometheus
 ```

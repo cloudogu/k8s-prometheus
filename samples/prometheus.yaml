@@ -1,0 +1,27 @@
+# This is just an example. Never ever EVER use this in production!
+
+global:
+  scrape_interval:     15s
+  external_labels:
+    monitor: 'codelab-monitor'
+
+scrape_configs:
+  - job_name: 'prometheus' # scrape prometheus itself
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['localhost:9090']
+  - job_name: 'federate-ces' # scrape our ces instance
+    scrape_interval: 15s
+    honor_labels: true
+    metrics_path: '/prometheus/federate'
+    params:
+      'match[]':
+        - '{__name__=~".+"}'
+    static_configs:
+      - targets: ['192.168.56.2:443']
+    scheme: https
+    tls_config:
+      insecure_skip_verify: true
+    basic_auth:
+      username: 'prometheus-exposed'
+      password: 'prometheus-exposed'

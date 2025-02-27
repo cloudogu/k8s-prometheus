@@ -151,3 +151,14 @@ You can then append a snippet like this to the `prometheus.yaml` of your central
       username: 'prometheus-exposed'
       password_file: '/path/to/your/password-file'
 ```
+
+# Föderation testen
+
+Wenn Sie Ihr lokales Ökosystem (unter `192.168.56.2`) mit den auth-presets aus dem Ordner `samples` konfiguriert haben,
+können Sie dann einen Prometheus in Docker mit aktivierter Föderation mit dem folgenden Befehl starten:
+```shell
+docker run \
+    -p 9090:9090 \
+    -v $(pwd)/samples/prometheus.yaml:/etc/prometheus/prometheus.yml \
+    prom/prometheus
+```

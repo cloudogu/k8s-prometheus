@@ -1,0 +1,13 @@
+# This is just an example. Never ever EVER use this in production!
+apiVersion: v1
+kind: Secret
+metadata:
+  name: k8s-prometheus-auth-presets
+  labels:
+    app: ces
+    k8s.cloudogu.com/component.name: k8s-prometheus
+stringData:
+  web.presets.yaml: |
+    basic_auth_users:
+      # password for this example is 'prometheus-exposed'
+      prometheus-exposed: $2a$10$NICKvyFIisBcF1efjusmeu7IwcHNHhwU9v4Ww/xzK7vide1C9CcjW
