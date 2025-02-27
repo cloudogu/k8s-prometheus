@@ -9,10 +9,11 @@ import (
 
 func Test_NewManager(t *testing.T) {
 	t.Run("should creat new Manager", func(t *testing.T) {
-		sut := NewManager("/some/file.yaml")
+		sut := NewManager("/some/file.yaml", &WebConfig{})
 
 		assert.Nil(t, sut.webConfig)
 		assert.NotNil(t, sut.rw)
+		assert.NotNil(t, sut.webPresets)
 		assert.IsType(t, &WebConfigFileReaderWriter{}, sut.rw)
 		assert.Equal(t, sut.rw.(*WebConfigFileReaderWriter).configFile, "/some/file.yaml")
 	})
@@ -147,18 +148,48 @@ func Test_DeleteServiceAccount(t *testing.T) {
 }
 
 func Test_ValidateAccount(t *testing.T) {
-	t.Run("should validate service account", func(t *testing.T) {
+	t.Run("should validate service account from config", func(t *testing.T) {
 		password1, err := hashPassword("password1")
 		require.NoError(t, err)
 		password2, err := hashPassword("password2")
 		require.NoError(t, err)
 		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password2}}
 
-		sut := &Manager{webConfig: webConfig}
+		sut := &Manager{webConfig: webConfig, webPresets: &WebConfig{}}
 
 		err = sut.ValidateAccount("user2", "password2")
 
 		require.NoError(t, err)
+	})
+
+	t.Run("should validate service account from presets", func(t *testing.T) {
+		password1, err := hashPassword("password1")
+		require.NoError(t, err)
+		password2, err := hashPassword("password2")
+		require.NoError(t, err)
+		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password1}}
+		webPresets := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password2}}
+
+		sut := &Manager{webConfig: webConfig, webPresets: webPresets}
+
+		err = sut.ValidateAccount("user2", "password2")
+
+		require.NoError(t, err)
+	})
+
+	t.Run("should fail to validate service account from presets that exists in config as well", func(t *testing.T) {
+		password1, err := hashPassword("password1")
+		require.NoError(t, err)
+		password2, err := hashPassword("password2")
+		require.NoError(t, err)
+		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password2}}
+		webPresets := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password1}}
+
+		sut := &Manager{webConfig: webConfig, webPresets: webPresets}
+
+		err = sut.ValidateAccount("user2", "password2")
+
+		assert.ErrorContains(t, err, "crypto/bcrypt: hashedPassword is not the hash of the given password")
 	})
 
 	t.Run("should fail validate service account for non existing user", func(t *testing.T) {
@@ -168,7 +199,7 @@ func Test_ValidateAccount(t *testing.T) {
 		require.NoError(t, err)
 		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password2}}
 
-		sut := &Manager{webConfig: webConfig}
+		sut := &Manager{webConfig: webConfig, webPresets: &WebConfig{}}
 
 		err = sut.ValidateAccount("user3", "foo")
 
@@ -183,7 +214,7 @@ func Test_ValidateAccount(t *testing.T) {
 		require.NoError(t, err)
 		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password2}}
 
-		sut := &Manager{webConfig: webConfig}
+		sut := &Manager{webConfig: webConfig, webPresets: &WebConfig{}}
 
 		err = sut.ValidateAccount("user2", "foo")
 
