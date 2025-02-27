@@ -87,3 +87,5 @@ docker run \
     -v $(pwd)/samples/prometheus.yaml:/etc/prometheus/prometheus.yml \
     prom/prometheus
 ```
+
+You can then [query `scrape_samples_scraped{job="federate-ces"}`](http://localhost:9090/query?g0.expr=scrape_samples_scraped%7Bjob%3D%22federate-ces%22%7D) and the result to the right should not be 0.
