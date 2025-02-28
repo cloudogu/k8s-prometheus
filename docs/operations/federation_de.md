@@ -80,7 +80,7 @@ Sie können dann einen Ausschnitt wie diesen an die `prometheus.yaml` Ihres zent
 
 ### Föderation testen
 
-Wenn Sie Ihr lokales Ökosystem (unter `192.168.56.2`) mit den auth-presets aus dem Ordner `samples` konfiguriert haben,
+Wenn Sie Ihr lokales EcoSystem (unter `192.168.56.2`) mit den auth-presets aus dem Ordner `samples` konfiguriert haben,
 können Sie dann einen Prometheus in Docker mit aktivierter Föderation mit dem folgenden Befehl starten:
 ```shell
 docker run \
