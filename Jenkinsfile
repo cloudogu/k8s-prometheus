@@ -101,7 +101,7 @@ node('docker') {
                     }
 
                     stage('Deploy k8s-prometheus') {
-                        k3d.helm("install ${repositoryName} ${helmChartDir}")
+                        k3d.helm("install ${repositoryName} ${helmChartDir} --set kube-prometheus-stack.prometheus-node-exporter.hostRootFsMount.enabled=false")
                     }
 
                     stage('Test k8s-prometheus') {
