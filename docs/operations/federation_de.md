@@ -45,7 +45,10 @@ stringData:
       prometheus-exposed: bcrypt-hashed-password
 ```
 
-Stellen Sie sicher, dass das Passwort mit bcrypt gehasht wird.
+Stellen Sie sicher, dass das Passwort mit bcrypt gehasht wird, z.B. mit folgendem Befehl aus dem `apache2-utils`-Paket:
+```shell
+  htpasswd -bnBC 10 "" <your-password> | tr -d ':\n' | sed 's/$2y/$2a/'
+```
 
 Starten Sie Prometheus neu, damit der Auth-Proxy die Datei lädt.
 

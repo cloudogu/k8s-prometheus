@@ -47,7 +47,10 @@ stringData:
       prometheus-exposed: bcrypt-hashed-password
 ```
 
-Make sure to hash the password with bcrypt.
+Make sure to hash the password with bcrypt, which can be done with the following command from the `apache2-utils` package:
+```shell
+  htpasswd -bnBC 10 "" <your-password> | tr -d ':\n' | sed 's/$2y/$2a/'
+```
 
 Restart the Prometheus to make the auth-proxy load the file.
 
