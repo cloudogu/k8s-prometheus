@@ -167,6 +167,8 @@ func Test_ValidateAccount(t *testing.T) {
 		require.NoError(t, err)
 		password2, err := hashPassword("password2")
 		require.NoError(t, err)
+
+		// webPresets have priority over config so the user2 in config should not matter
 		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password1}}
 		webPresets := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password2}}
 
@@ -182,6 +184,8 @@ func Test_ValidateAccount(t *testing.T) {
 		require.NoError(t, err)
 		password2, err := hashPassword("password2")
 		require.NoError(t, err)
+
+		// webPresets have priority over config so the user2 in config should not matter
 		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password2}}
 		webPresets := &WebConfig{BasicAuthUsers: map[string]string{"user1": password1, "user2": password1}}
 

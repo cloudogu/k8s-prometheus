@@ -29,8 +29,8 @@ func ReadConfigFromEnv() (Configuration, error) {
 		conf.LogLevel = "INFO"
 	}
 
+	// optional
 	conf.WebPresetsFile = os.Getenv(presetsFileEnv)
-	// the presets file may be empty, which will cause it to be ignored
 
 	conf.WebConfigFile = os.Getenv(configFileEnv)
 	if conf.WebConfigFile == "" {
