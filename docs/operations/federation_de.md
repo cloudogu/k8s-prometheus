@@ -1,6 +1,6 @@
 # Federation
 
-Federation ist eine Funktion, mit der Sie Metriken aus Ihrer Prometheus-Instanz für eine andere Prometheus-Instanz verfügbar machen können.
+Federation ist eine Funktion, mit der Metriken aus einer Prometheus-Instanz für eine andere Prometheus-Instanz verfügbar gemacht werden können.
 
 ## Anwendungsfall: Sammeln von Metriken aus CES-Instanzen in einem zentralen Prometheus
 
@@ -8,11 +8,10 @@ In diesem Anwendungsfall haben wir möglicherweise mehrere CES-Instanzen und mö
 
 Sie können dies für beliebig viele CES-Instanzen tun.
 
-### Konfigurieren von CES-Prometheus
+### Konfiguration vom CES-Prometheus
 
-Zuerst müssen wir unser CES-Prometheus außerhalb des Clusters verfügbar machen.
-Am einfachsten geht dies, indem man über einen Ingress eine Route dorthin erstellt.
-Dies kann mit dem folgenden `valuesYamlOverwrite` erfolgen:
+Zuerst muss der CES-Prometheus außerhalb des Clusters vervügbar gemacht werden.
+Folgende `valuesYamlOverwrite` erstellt über einen Ingress eine Route dorthin:
 ```yaml
 apiVersion: k8s.cloudogu.com/v1
 kind: Component
@@ -30,7 +29,7 @@ spec:
         enabled: true
 ```
 
-Da sich CES-Prometheus hinter einem Authentifizierungsproxy befindet, müssen wir einen Service-Account erstellen, indem wir einen Secret wie das Folgende anwenden:
+Da sich CES-Prometheus hinter einem Authentifizierungsproxy befindet, muss ein Service-Account erstellt werden, indem ein Secret wie das Folgende angewendet wird:
 ```yaml
 apiVersion: v1
 kind: Secret
@@ -45,23 +44,23 @@ stringData:
       prometheus-exposed: bcrypt-hashed-password
 ```
 
-Stellen Sie sicher, dass das Passwort mit bcrypt gehasht wird, z.B. mit folgendem Befehl aus dem `apache2-utils`-Paket:
+Das Passwort muss mit bcrypt gehasht werden, z.B. mit folgendem Befehl aus dem `apache2-utils`-Paket:
 ```shell
   htpasswd -bnBC 10 "" <your-password> | tr -d ':\n' | sed 's/$2y/$2a/'
 ```
 
-Starten Sie Prometheus neu, damit der Auth-Proxy die Datei lädt.
+Prometheus muss anschließend neugestartet werden, damit der Auth-Proxy die Datei lädt.
 
-Testen Sie die Authentifizierung und die Föderation mit diesem Befehl:
+Die Authentifizierung und die Föderation kann mit diesem Befehl getestet werden:
 ```shell
 wget --header="Content-Type: application/json" --header="Accept: application/json" \
   --auth-no-challenge --user=prometheus-exposed --ask-password \
   -O- "https://<your ces-fqdn>/prometheus/federate?match[]=%7B__name__%3D~%22.%2B%22%7D"
 ```
 
-### Konfigurieren Sie das zentralisierte Prometheus
+### Konfiguration des zentralisierten Prometheus
 
-Sie können dann einen Ausschnitt wie diesen an die `prometheus.yaml` Ihres zentralisierten Prometheus anhängen, um Metriken aus dem CES-Prometheus zu sammeln:
+Analog zum folgenden Abschnitt die `prometheus.yaml` des zentralisierten Prometheus erweitern, um Metriken aus dem CES-Prometheus zu sammeln:
 ```yaml
   - job_name: 'federate-ces'
     scrape_interval: 15s
@@ -80,8 +79,8 @@ Sie können dann einen Ausschnitt wie diesen an die `prometheus.yaml` Ihres zent
 
 ### Föderation testen
 
-Wenn Sie Ihr lokales EcoSystem (unter `192.168.56.2`) mit den auth-presets aus dem Ordner `samples` konfiguriert haben,
-können Sie dann einen Prometheus in Docker mit aktivierter Föderation mit dem folgenden Befehl starten:
+Wenn ein lokales EcoSystem (unter `192.168.56.2`) mit den auth-presets aus dem Ordner `samples` konfiguriert wird,
+kann anschließend ein Prometheus in Docker mit aktivierter Föderation mit dem folgenden Befehl gestartet werden:
 ```shell
 docker run \
     -p 9090:9090 \
@@ -89,4 +88,4 @@ docker run \
     prom/prometheus
 ```
 
-Sie können dann [`scrape_samples_scraped{job="federate-ces"}` abfragen](http://localhost:9090/query?g0.expr=scrape_samples_scraped%7Bjob%3D%22federate-ces%22%7D) und das Ergebnis rechts sollte nicht 0 sein.
+Nun kann z.B. [scrape_samples_scraped{job="federate-ces"}](http://localhost:9090/query?g0.expr=scrape_samples_scraped%7Bjob%3D%22federate-ces%22%7D) abgefragt werden und das Ergebnis rechts sollte nicht 0 sein.
