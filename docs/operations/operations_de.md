@@ -15,7 +15,7 @@ metadata:
 spec:
   name: k8s-prometheus
   namespace: k8s
-  version: 2.50.1-1
+  version: 57.1.1-8
 ```
 
 Die neue yaml-Datei kann anschließend im Kubernetes-Cluster erstellt werden:
@@ -53,7 +53,7 @@ metadata:
 spec:
   name: k8s-prometheus
   namespace: k8s
-  version: 2.50.1-1
+  version: 57.1.1-8
   valuesYamlOverwrite: |
     kube-prometheus-stack:
       prometheus:

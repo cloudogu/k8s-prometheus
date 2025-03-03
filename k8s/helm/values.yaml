@@ -1,6 +1,11 @@
-networkPolicies:
-  enabled: true
 global:
+  networkPolicies:
+    enabled: true
+  ingress:
+    enabled: false
+    className: k8s-ecosystem-ces-service
+    path: /prometheus(/|$)(.*)
+    rewriteTarget: /$2
   imagePullSecrets:
     - "ces-container-registries"
 kube-prometheus-stack:
@@ -68,9 +73,13 @@ kube-prometheus-stack:
         - name: ces-config
           persistentVolumeClaim:
             claimName: k8s-prometheus-config
+        - name: ces-presets
+          secret:
+            secretName: k8s-prometheus-auth-presets
+            optional: true
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:57.1.1-7
+          image: cloudogu/k8s-prometheus-auth:57.1.1-8
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
@@ -84,6 +93,8 @@ kube-prometheus-stack:
                 secretKeyRef:
                   name: k8s-prometheus-service-account-api
                   key: apiKey
+            - name: WEB_PRESETS_FILE
+              value: "/presets/web.presets.yaml"
           ports:
             - name: auth-proxy
               containerPort: 8086
@@ -92,3 +103,6 @@ kube-prometheus-stack:
           volumeMounts:
             - name: ces-config
               mountPath: /config
+            - name: ces-presets
+              readOnly: true
+              mountPath: /presets

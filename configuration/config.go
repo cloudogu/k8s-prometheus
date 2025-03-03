@@ -6,6 +6,7 @@ import (
 )
 
 const configFileEnv = "WEB_CONFIG_FILE"
+const presetsFileEnv = "WEB_PRESETS_FILE"
 const apiKeyEnv = "API_KEY"
 const prometheusUrlEnv = "PROMETHEUS_URL"
 const logLevelEnv = "LOG_LEVEL"
@@ -13,10 +14,11 @@ const logLevelEnv = "LOG_LEVEL"
 const errorFormat = "environment variable %s is not set"
 
 type Configuration struct {
-	WebConfigFile string
-	ApiKey        string
-	PrometheusUrl string
-	LogLevel      string
+	WebConfigFile  string
+	WebPresetsFile string
+	ApiKey         string
+	PrometheusUrl  string
+	LogLevel       string
 }
 
 func ReadConfigFromEnv() (Configuration, error) {
@@ -26,6 +28,9 @@ func ReadConfigFromEnv() (Configuration, error) {
 	if conf.LogLevel == "" {
 		conf.LogLevel = "INFO"
 	}
+
+	// optional
+	conf.WebPresetsFile = os.Getenv(presetsFileEnv)
 
 	conf.WebConfigFile = os.Getenv(configFileEnv)
 	if conf.WebConfigFile == "" {

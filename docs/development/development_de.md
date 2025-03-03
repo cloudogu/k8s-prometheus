@@ -52,6 +52,8 @@ kube-prometheus-stack:
               value: "INFO"
             - name: PROMETHEUS_URL
               value: "http://localhost:9090"
+            - name: WEB_PRESETS_FILE
+              value: "/presets/web.presets.yaml"
             - name: WEB_CONFIG_FILE
               value: "/config/web.config.yaml"
             - name: API_KEY
@@ -67,16 +69,20 @@ kube-prometheus-stack:
           volumeMounts:
             - name: ces-config
               mountPath: /config
+            - name: ces-presets
+              readOnly: true
+              mountPath: /presets
 ```
 
 Folgende Umgebungsvariablen können konfiguriert werden:
 
-| Name            | Beschreibung                                                                   |
-|-----------------|--------------------------------------------------------------------------------|
-| LOG_LEVEL       | Das zu verwendende Log-Level(`DEBUG`, `INFO`, `WARN`, `ERROR`). Default `INFO` |
-| PROMETHEUS_URL  | Die URL für den Auth-Proxy unter der Prometheus zu erreichen ist               |
-| WEB_CONFIG_FILE | Die Datei in der die Service-Accounts gespeichert werden                       |
-| API_KEY         | Der API-Key für die Service-Account API                                        |
+| Name              | Beschreibung                                                                                       |
+|-------------------|----------------------------------------------------------------------------------------------------|
+| LOG_LEVEL         | Das zu verwendende Log-Level(`DEBUG`, `INFO`, `WARN`, `ERROR`). Default `INFO`                     |
+| PROMETHEUS_URL    | Die URL für den Auth-Proxy unter der Prometheus zu erreichen ist                                   |
+| WEB_PRESETS_FILE  | Read-only-Datei in der vorkonfigurierte Service-Accounts gespeichert werden, z.B. aus einem Secret |
+| WEB_CONFIG_FILE   | Die Datei in der die Service-Accounts gespeichert werden                                           |
+| API_KEY           | Der API-Key für die Service-Account API                                                            |
 
 ## Entwicklung im lokalen CES-Cluster
 Um die `k8s-prometheus` Komponente im lokalen CES-Cluster zu testen, können die folgenden Make-Targets verwendet werden:

@@ -3,17 +3,20 @@ package main
 import (
 	"context"
 	"errors"
-	"github.com/cloudogu/k8s-prometheus/auth/configuration"
-	"github.com/cloudogu/k8s-prometheus/auth/prometheus"
-	"github.com/cloudogu/k8s-prometheus/auth/proxy"
-	"github.com/cloudogu/k8s-prometheus/auth/serviceaccount"
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/cloudogu/k8s-prometheus/auth/configuration"
+	"github.com/cloudogu/k8s-prometheus/auth/prometheus"
+	"github.com/cloudogu/k8s-prometheus/auth/proxy"
+	"github.com/cloudogu/k8s-prometheus/auth/serviceaccount"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -26,7 +29,16 @@ func main() {
 
 	configureLogger(config)
 
-	manager := prometheus.NewManager(config.WebConfigFile)
+	webPresets := &prometheus.WebConfig{}
+	if config.WebPresetsFile != "" {
+		// if the file does not exist, an empty object will be returned
+		webPresets, err = prometheus.NewWebConfigFileReaderWriter(config.WebPresetsFile).ReadWebConfig()
+		if err != nil {
+			panic(fmt.Errorf("failed to parse web presets file: %w", err))
+		}
+	}
+
+	manager := prometheus.NewManager(config.WebConfigFile, webPresets)
 
 	serviceAccountSrv := serviceaccount.CreateServer(config, manager)
 	go func() {

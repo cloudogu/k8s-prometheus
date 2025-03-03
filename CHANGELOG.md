@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v57.1.1-8] - 2025-03-03
+### Added
+- [#16] Optional Ingress to expose Prometheus, e.g. for federation.
+- [#16] Web-Presets-File to preconfigure service accounts via a secret.
+
 ## [v57.1.1-7] - 2024-12-12
 ### Added
 - [#14] add network policies for prometheus and kube-stack-promotheus related components

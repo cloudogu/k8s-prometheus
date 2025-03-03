@@ -70,12 +70,13 @@ kube-prometheus-stack:
 
 The following environment variables can be configured:
 
-| name            | description                                                                 |
-|-----------------|-----------------------------------------------------------------------------|
-| LOG_LEVEL       | The log level to be used (`DEBUG`, `INFO`, `WARN`, `ERROR`). Default `INFO` |
-| PROMETHEUS_URL  | The URL for the auth proxy under which Prometheus can be reached            |
-| WEB_CONFIG_FILE | The file in which the service accounts are saved                            |
-| API_KEY         | The API key for the service account API                                     |
+| name              | description                                                                 |
+|-------------------|-----------------------------------------------------------------------------|
+| LOG_LEVEL         | The log level to be used (`DEBUG`, `INFO`, `WARN`, `ERROR`). Default `INFO` |
+| PROMETHEUS_URL    | The URL for the auth proxy under which Prometheus can be reached            |
+| WEB_PRESETS_FILE  | Read-only file for preset Service-Accounts, e.g. from a secret              |
+| WEB_CONFIG_FILE   | The file in which the service accounts are saved                            |
+| API_KEY           | The API key for the service account API                                     |
 
 
 ## Development in the local CES cluster
