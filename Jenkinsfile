@@ -101,6 +101,13 @@ node('docker') {
                     }
 
                     stage('Deploy k8s-prometheus') {
+                        // hostRootFsMount is disabled, because on our Jenkins worker the node exporter didn't start with
+                        // the following error:
+                        // `failed to generate container <container> spec: failed to generate spec: path "/" is mounted on "/" but it is not a shared or slave mount`
+                        // This is caused by using kubernetes in docker(k3d) and should not happen in production.
+                        // If it happens nevertheless, this setting should be set via valuesYamlOverwrite.
+                        // With this option disabled the node-exporter won't be able to collect all data, so it should
+                        // not be the default setting. See here: https://github.com/prometheus-operator/kube-prometheus/discussions/790#discussioncomment-964581
                         k3d.helm("install ${repositoryName} ${helmChartDir} --set kube-prometheus-stack.prometheus-node-exporter.hostRootFsMount.enabled=false")
                     }
 
