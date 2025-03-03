@@ -1,0 +1,22 @@
+# we can't use the ingress from the prometheus helm chart because the service name there can't be configured
+# we need to configure the service name because we have to reference the auth-proxy service
+{{- if .Values.global.ingress.enabled }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: k8s-prometheus-exposed
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: {{ .Values.global.ingress.rewriteTarget }}
+spec:
+  ingressClassName: {{ .Values.global.ingress.className }}
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: k8s-prometheus
+                port:
+                  name: auth-proxy
+            pathType: Prefix
+            path: {{ .Values.global.ingress.path }}
+{{- end }}

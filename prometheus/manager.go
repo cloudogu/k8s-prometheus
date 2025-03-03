@@ -11,12 +11,16 @@ type WebConfigReaderWriter interface {
 }
 
 type Manager struct {
-	rw        WebConfigReaderWriter
-	webConfig *WebConfig
+	rw         WebConfigReaderWriter
+	webConfig  *WebConfig
+	webPresets *WebConfig
 }
 
-func NewManager(configFile string) *Manager {
-	return &Manager{rw: NewWebConfigFileReaderWriter(configFile)}
+func NewManager(configFile string, webPresets *WebConfig) *Manager {
+	return &Manager{
+		rw:         NewWebConfigFileReaderWriter(configFile),
+		webPresets: webPresets,
+	}
 }
 
 func (m *Manager) getWebConfig() (*WebConfig, error) {
@@ -81,6 +85,12 @@ func (m *Manager) ValidateAccount(username string, password string) error {
 	config, err := m.getWebConfig()
 	if err != nil {
 		return err
+	}
+
+	for user, hashedPassword := range m.webPresets.BasicAuthUsers {
+		if user == username {
+			return compareHashAndPassword(hashedPassword, password)
+		}
 	}
 
 	for user, hashedPassword := range config.BasicAuthUsers {

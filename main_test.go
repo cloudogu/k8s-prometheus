@@ -26,6 +26,8 @@ func Test_main(t *testing.T) {
 
 		err := os.Setenv("WEB_CONFIG_FILE", "/web-config.file")
 		require.NoError(t, err)
+		err = os.Setenv("WEB_PRESETS_FILE", "/web-presets.file")
+		require.NoError(t, err)
 		err = os.Setenv("API_KEY", "myApiKey")
 		require.NoError(t, err)
 		err = os.Setenv("PROMETHEUS_URL", "http://prom.url")
