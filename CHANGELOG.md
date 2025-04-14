@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- [#18] Set sensible resource requests and limits
+
 ## [v57.1.1-8] - 2025-03-03
 ### Added
 - [#16] Optional Ingress to expose Prometheus, e.g. for federation.
