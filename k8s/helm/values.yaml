@@ -8,6 +8,9 @@ global:
     rewriteTarget: /$2
   imagePullSecrets:
     - "ces-container-registries"
+authProxy:
+  configPVC:
+    storage: 1Gi # Some cloud providers don't support less than 1 GiB
 kube-prometheus-stack:
   grafana:
     enabled: false
