@@ -8,6 +8,9 @@ global:
     rewriteTarget: /$2
   imagePullSecrets:
     - "ces-container-registries"
+authProxy:
+  configPVC:
+    storage: 1Gi # Some cloud providers don't support less than 1 GiB
 kube-prometheus-stack:
   grafana:
     enabled: false
@@ -21,6 +24,12 @@ kube-prometheus-stack:
       registry: registry.k8s.io
       repository: kube-state-metrics/kube-state-metrics
       tag: "v2.10.1"
+    resources:
+      limits:
+        memory: 105M
+      requests:
+        cpu: 15m
+        memory: 105M
   prometheus-node-exporter:
     enabled: true
     prometheus:
@@ -33,6 +42,12 @@ kube-prometheus-stack:
       registry: quay.io
       repository: prometheus/node-exporter
       tag: "v1.7.0"
+    resources:
+      limits:
+        memory: 105M
+      requests:
+        cpu: 15m
+        memory: 105M
   nameOverride: "k8s-prometheus"
   prometheusOperator:
     enabled: true
@@ -51,12 +66,30 @@ kube-prometheus-stack:
         registry: quay.io
         repository: prometheus-operator/prometheus-config-reloader
         tag: "v0.72.0"
+      resources:
+        limits:
+          memory: 105M
+        requests:
+          cpu: 15m
+          memory: 105M
+    resources:
+      limits:
+        memory: 105M
+      requests:
+        cpu: 15m
+        memory: 105M
   prometheus:
     prometheusSpec:
       image:
         registry: quay.io
         repository: prometheus/prometheus
         tag: v2.51.0
+      resources:
+        limits:
+          memory: 1039M
+        requests:
+          cpu: 50m
+          memory: 1039M
       podMetadata:
         labels:
           app: k8s-prometheus
@@ -79,7 +112,7 @@ kube-prometheus-stack:
             optional: true
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:57.1.1-8
+          image: cloudogu/k8s-prometheus-auth:57.1.1-9
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
@@ -106,3 +139,9 @@ kube-prometheus-stack:
             - name: ces-presets
               readOnly: true
               mountPath: /presets
+          resources:
+            limits:
+              memory: 105M
+            requests:
+              cpu: 15m
+              memory: 105M
