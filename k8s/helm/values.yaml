@@ -24,7 +24,6 @@ kube-prometheus-stack:
     image:
       registry: registry.k8s.io
       repository: kube-state-metrics/kube-state-metrics
-      tag: ""
     resources:
       limits:
         memory: 105M
@@ -43,7 +42,6 @@ kube-prometheus-stack:
     image:
       registry: quay.io
       repository: prometheus/node-exporter
-      tag: ""
     resources:
       limits:
         memory: 105M
@@ -58,17 +56,13 @@ kube-prometheus-stack:
         image:
           registry: registry.k8s.io
           repository: ingress-nginx/kube-webhook-certgen
-                      prometheus-operator/admission-webhook
-          tag: ""
     image:
       registry: quay.io
       repository: prometheus-operator/prometheus-operator
-      tag: ""
     prometheusConfigReloader:
       image:
         registry: quay.io
         repository: prometheus-operator/prometheus-config-reloader
-        tag: ""
       resources:
         limits:
           memory: 105M
@@ -86,7 +80,6 @@ kube-prometheus-stack:
       image:
         registry: quay.io
         repository: prometheus/prometheus
-        tag: ""
       resources:
         limits:
           memory: 1039M
