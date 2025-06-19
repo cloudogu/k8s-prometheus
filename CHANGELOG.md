@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v75.3.5-1] - 2025-06-19
+
+### Changed
+- [#20] Update Prometheus to v75.3.5
+
 ## [v57.1.1-9] - 2025-04-24
 ### Changed
 - [#18] Set sensible resource requests and limits
