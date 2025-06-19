@@ -1,13 +1,13 @@
 apiVersion: v1
 values:
   images:
-    kubeStateMetrics: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.10.1
-    prometheusNodeExporter: quay.io/prometheus/node-exporter:v1.7.0
-    admissionWebhooksPatch: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v20221220-controller-v1.5.1-58-g787ea74b6
-    prometheusOperator: quay.io/prometheus-operator/prometheus-operator:v0.72.0
-    configReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.72.0
-    prometheusServer: quay.io/prometheus/prometheus:v2.51.0
-    authSidecar: cloudogu/k8s-prometheus-auth:57.1.1-9
+    kubeStateMetrics: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0
+    prometheusNodeExporter: quay.io/prometheus/node-exporter:v1.9.1
+    admissionWebhooksPatch: registry.k8s.io/ingress-nginx/kube-webhook-certgen:v1.5.4
+    prometheusOperator: quay.io/prometheus-operator/prometheus-operator:v0.82.2
+    configReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.82.2
+    prometheusServer: quay.io/prometheus/prometheus:v3.4.1
+    authSidecar: cloudogu/k8s-prometheus-auth:75.3.5-1
 patches:
   values.yaml:
     kube-prometheus-stack:
