@@ -1,5 +1,5 @@
 # Build the manager binary
-FROM golang:1.22-alpine AS builder
+FROM golang:1.24.6-alpine AS builder
 
 WORKDIR /workspace
 
@@ -28,7 +28,7 @@ RUN go build -mod=vendor -o target/k8s-prometheus-auth
 FROM gcr.io/distroless/static:nonroot
 LABEL maintainer="hello@cloudogu.com" \
       NAME="k8s-prometheus-auth" \
-      VERSION="75.3.5-1"
+      VERSION="75.3.5-2"
 
 WORKDIR /
 COPY --from=builder /workspace/target/k8s-prometheus-auth .
