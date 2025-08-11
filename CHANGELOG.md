@@ -7,11 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v75.3.5-2] - 2025-08-11
 ### Fixed
 - [#23] Update dependencies to fix golang crypto CVE-2024-45337.
 
 ## [v75.3.5-1] - 2025-06-19
-
 ### Changed
 - [#20] Update Prometheus to v75.3.5
 
