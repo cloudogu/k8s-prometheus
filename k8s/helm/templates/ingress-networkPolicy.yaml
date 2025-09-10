@@ -18,7 +18,7 @@ spec:
           kubernetes.io/metadata.name: ecosystem
       podSelector:
         matchLabels:
-          dogu.name: nginx-ingress
+          k8s.cloudogu.com/component.name: k8s-ces-gateway
     ports:
       - port: auth-proxy
         protocol: TCP
