@@ -102,7 +102,9 @@ kube-prometheus-stack:
           spec:
             resources:
               requests:
-                storage: 4Gi
+                # Updating this value at runtime has no effect because kubernetes does not support volume expansion via statefulsets.
+                # See https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes for increasing the volume.
+                storage: 10Gi
       retention: 10d
       volumes:
         - name: ces-config
