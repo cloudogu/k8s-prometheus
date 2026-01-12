@@ -117,7 +117,7 @@ kube-prometheus-stack:
             optional: true
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:75.3.5-3
+          image: cloudogu/k8s-prometheus-auth:75.3.5-4
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
