@@ -6,6 +6,9 @@ metadata:
     app.kubernetes.io/name: k8s-prometheus
   name: k8s-prometheus-config
 spec:
+  {{- if .Values.authProxy.configPVC.storageClassName }}
+  storageClassName: {{ .Values.authProxy.configPVC.storageClassName }}
+  {{- end }}
   accessModes:
     - ReadWriteOnce
   resources:
