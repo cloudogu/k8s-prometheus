@@ -6,6 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- [#30] Make the storage class from the config pvc configurable.
+
 ### Fixed
 - [#27] Increase pvc size to `10Gi` to prevent `no space left on device` errors in regular use with the Cloudogu EcoSystem.
 

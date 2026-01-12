@@ -10,6 +10,7 @@ global:
     - "ces-container-registries"
 authProxy:
   configPVC:
+    storageClassName: null
     storage: 1Gi # Some cloud providers don't support less than 1 GiB
 kube-prometheus-stack:
   grafana:
