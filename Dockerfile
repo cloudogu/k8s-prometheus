@@ -28,7 +28,7 @@ RUN go build -mod=vendor -o target/k8s-prometheus-auth
 FROM gcr.io/distroless/static:nonroot
 LABEL maintainer="hello@cloudogu.com" \
       NAME="k8s-prometheus-auth" \
-      VERSION="75.3.5-3"
+      VERSION="75.3.5-4"
 
 WORKDIR /
 COPY --from=builder /workspace/target/k8s-prometheus-auth .
