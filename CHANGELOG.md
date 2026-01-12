@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v75.3.5-4] - 2026-01-12
+### Changed
+- [#30] Make the storage class from the config pvc configurable.
+
+### Fixed
+- [#27] Increase pvc size to `10Gi` to prevent `no space left on device` errors in regular use with the Cloudogu EcoSystem.
+
 ## [v75.3.5-3] - 2025-09-10
 ### Changed
 - [#25] Switch pod-selector for network-policy to "k8s-ces-gateway" instead of nginx

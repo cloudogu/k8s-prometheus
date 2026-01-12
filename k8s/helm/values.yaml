@@ -10,6 +10,7 @@ global:
     - "ces-container-registries"
 authProxy:
   configPVC:
+    storageClassName: null
     storage: 1Gi # Some cloud providers don't support less than 1 GiB
 kube-prometheus-stack:
   grafana:
@@ -102,7 +103,9 @@ kube-prometheus-stack:
           spec:
             resources:
               requests:
-                storage: 4Gi
+                # Updating this value at runtime has no effect because kubernetes does not support volume expansion via statefulsets.
+                # See https://prometheus-operator.dev/docs/platform/storage/#resizing-volumes for increasing the volume.
+                storage: 10Gi
       retention: 10d
       volumes:
         - name: ces-config
@@ -114,7 +117,7 @@ kube-prometheus-stack:
             optional: true
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:75.3.5-3
+          image: cloudogu/k8s-prometheus-auth:75.3.5-4
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
