@@ -4,8 +4,7 @@ global:
   ingress:
     enabled: false
     className: k8s-ecosystem-ces-service
-    path: /prometheus(/|$)(.*)
-    rewriteTarget: /$2
+    path: /prometheus
   imagePullSecrets:
     - "ces-container-registries"
 authProxy:

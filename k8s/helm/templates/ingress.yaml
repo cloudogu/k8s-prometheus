@@ -6,17 +6,17 @@ kind: Ingress
 metadata:
   name: k8s-prometheus-exposed
   annotations:
-    nginx.ingress.kubernetes.io/rewrite-target: {{ .Values.global.ingress.rewriteTarget }}
+    traefik.ingress.kubernetes.io/router.middlewares: {{ .Release.Namespace }}-k8s-prometheus-rewrite@kubernetescrd
 spec:
-  ingressClassName: {{ .Values.global.ingress.className }}
+  ingressClassName: traefik
   rules:
     - http:
         paths:
-          - backend:
+          - path: /prometheus
+            pathType: Prefix
+            backend:
               service:
                 name: k8s-prometheus
                 port:
                   name: auth-proxy
-            pathType: Prefix
-            path: {{ .Values.global.ingress.path }}
 {{- end }}
