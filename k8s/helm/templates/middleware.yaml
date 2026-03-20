@@ -5,6 +5,6 @@ metadata:
   name: {{ .Release.Namespace }}-k8s-prometheus-rewrite
 spec:
   replacePathRegex:
-    regex: ^/prometheus(/|$)(.*)
+    regex: ^{{ .Values.global.ingress.path }}(/|$)(.*)
     replacement: /$2
 {{- end }}
