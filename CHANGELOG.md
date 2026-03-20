@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v75.3.5-5] - 2026-03-20
+### Removed
+- [#33] remove outdated ingress-nginx k8s resources
+
 ## [v75.3.5-4] - 2026-01-12
 ### Changed
 - [#30] Make the storage class from the config pvc configurable.
