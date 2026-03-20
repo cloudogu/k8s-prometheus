@@ -1,0 +1,10 @@
+{{- if .Values.global.ingress.enabled }}
+apiVersion: traefik.io/v1alpha1
+kind: Middleware
+metadata:
+  name: {{ .Release.Namespace }}-k8s-prometheus-rewrite
+spec:
+  replacePathRegex:
+    regex: ^{{ .Values.global.ingress.path }}(/|$)(.*)
+    replacement: /$2
+{{- end }}
