@@ -4,8 +4,7 @@ global:
   ingress:
     enabled: false
     className: k8s-ecosystem-ces-service
-    path: /prometheus(/|$)(.*)
-    rewriteTarget: /$2
+    path: /prometheus
   imagePullSecrets:
     - "ces-container-registries"
 authProxy:
@@ -58,6 +57,7 @@ kube-prometheus-stack:
       patch:
         image:
           registry: registry.k8s.io
+          # this image comes from the deprecated nginx-ingress repository, but there is no good alternative for now
           repository: ingress-nginx/kube-webhook-certgen
           tag: "v1.5.4"
     image:
@@ -117,7 +117,7 @@ kube-prometheus-stack:
             optional: true
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:75.3.5-4
+          image: cloudogu/k8s-prometheus-auth:75.3.5-5
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
