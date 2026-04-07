@@ -1,6 +1,6 @@
 module github.com/cloudogu/k8s-prometheus/auth
 
-go 1.24.6
+go 1.26.1
 
 require (
 	github.com/gin-gonic/gin v1.10.1
