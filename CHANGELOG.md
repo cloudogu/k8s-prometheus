@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v75.3.5-6] - 2026-04-07
+### Security
+- [#32] Fix Go stdlib CVE-2025-68121
+
 ## [v75.3.5-5] - 2026-03-20
 ### Removed
 - [#33] remove outdated ingress-nginx k8s resources
