@@ -108,7 +108,7 @@ kube-prometheus-stack:
                 storage: 10Gi
       retention: 10d
       # retentionSize should be 80-85% of the disk space allocated to prometheus, see https://prometheus.io/docs/prometheus/latest/storage/#right-sizing-retention-size
-      retentionSize: 8Gi
+      retentionSize: 8GB
       volumes:
         - name: ces-config
           persistentVolumeClaim:
