@@ -25,6 +25,25 @@ Optionally, print the resolved endpoint:
 echo "${ENDPOINT}"
 ```
 
+## Add network policy to allow access to the producer endpoint
+```bash
+kubectl -n "${NAMESPACE}" apply -f - <<EOF
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: sa-producer-debug-netpol
+spec:
+  podSelector:
+    matchLabels:
+      app: k8s-prometheus
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          run: sa-producer-debug
+EOF
+```
+
 ## Start a debug pod
 The debug pod runs in the same namespace and receives the endpoint and API key as environment variables.
 
@@ -85,4 +104,5 @@ Expected result:
 ## Cleanup
 ```bash
 kubectl -n "${NAMESPACE}" delete pod sa-producer-debug
+kubectl -n "${NAMESPACE}" delete networkpolicy sa-producer-debug-netpol
 ```
