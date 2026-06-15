@@ -3,25 +3,21 @@ package prometheus
 import (
 	"crypto/rand"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"math/big"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
-const usernameAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 const passwordAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+"
 
 func createNewAccount(consumer string) (string, string, error) {
-	username, err := generateRadomString(usernameAlphabet, 8)
-	if err != nil {
-		return "", "", fmt.Errorf("failed to generate username: %w", err)
-	}
 	password, err := generateRadomString(passwordAlphabet, 24)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate password: %w", err)
 	}
 
-	return fmt.Sprintf("%s-%s", consumer, username), password, nil
+	return fmt.Sprintf("%s", consumer), password, nil
 }
 
 func hashPassword(password string) (string, error) {

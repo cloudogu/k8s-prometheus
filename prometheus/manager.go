@@ -37,6 +37,22 @@ func (m *Manager) getWebConfig() (*WebConfig, error) {
 	return m.webConfig, nil
 }
 
+func (m *Manager) GetServiceAccount(consumer string) (user map[string]string, found bool, err error) {
+	config, err := m.getWebConfig()
+	if err != nil {
+		return nil, false, err
+	}
+
+	_, ok := config.BasicAuthUsers[consumer]
+	if !ok {
+		return nil, false, nil
+	}
+
+	return map[string]string{
+		"username": consumer,
+	}, true, nil
+}
+
 func (m *Manager) CreateServiceAccount(consumer string, params []string) (credentials map[string]string, err error) {
 	config, err := m.getWebConfig()
 	if err != nil {

@@ -1,9 +1,10 @@
 package serviceaccount
 
 import (
+	"net/http"
+
 	"github.com/cloudogu/k8s-prometheus/auth/configuration"
 	"github.com/gin-gonic/gin"
-	"net/http"
 )
 
 func CreateServer(config configuration.Configuration, manager manager) *http.Server {
@@ -15,6 +16,8 @@ func CreateServer(config configuration.Configuration, manager manager) *http.Ser
 	serviceAccountGroup.Use(ValidateAPIKey(config.ApiKey))
 	serviceAccountGroup.POST("/", serviceAccountCtrl.CreateAccount)
 	serviceAccountGroup.DELETE("/:consumer", serviceAccountCtrl.DeleteAccount)
+	serviceAccountGroup.HEAD("/:consumer", serviceAccountCtrl.GetAccount)
+	serviceAccountGroup.GET("/:consumer", serviceAccountCtrl.GetAccount)
 
 	return &http.Server{
 		Addr:    ":8087",

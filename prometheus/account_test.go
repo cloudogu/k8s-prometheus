@@ -1,11 +1,12 @@
 package prometheus
 
 import (
+	"strings"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"golang.org/x/crypto/bcrypt"
-	"strings"
-	"testing"
 )
 
 func Test_createNewAccount(t *testing.T) {
@@ -13,18 +14,8 @@ func Test_createNewAccount(t *testing.T) {
 		username, password, err := createNewAccount("myConsumer")
 		require.NoError(t, err)
 
-		assert.Len(t, username, 19)
-		assert.True(t, strings.HasPrefix(username, "myConsumer-"))
+		assert.Equal(t, "myConsumer", username)
 		assert.Len(t, password, 24)
-
-		username2, password2, err := createNewAccount("myConsumer")
-		require.NoError(t, err)
-
-		assert.NotEqual(t, username, username2)
-		assert.Len(t, username2, 19)
-		assert.True(t, strings.HasPrefix(username2, "myConsumer-"))
-		assert.NotEqual(t, password, password2)
-		assert.Len(t, password2, 24)
 	})
 }
 

@@ -1,10 +1,10 @@
 package prometheus
 
 import (
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 func Test_NewManager(t *testing.T) {
@@ -70,7 +70,7 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 		require.NoError(t, err)
 		assert.NotEqual(t, "", credentials["username"])
-		assert.True(t, strings.HasPrefix(credentials["username"], "myConsumer-"))
+		assert.Equal(t, "myConsumer", credentials["username"])
 		assert.NotEqual(t, "", credentials["password"])
 
 		hashedPassword, exists := sut.webConfig.BasicAuthUsers[credentials["username"]]
