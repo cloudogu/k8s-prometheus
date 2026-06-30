@@ -2,22 +2,34 @@ package prometheus
 
 import (
 	"fmt"
-	"gopkg.in/yaml.v3"
 	"os"
+
+	"gopkg.in/yaml.v3"
 )
 
+// WebConfig abstracts prometheus auth's web.config.yaml configuration file which contains user accounts.
 type WebConfig struct {
+	// BasicAuthUsers maps a username key to a hashed password.
 	BasicAuthUsers map[string]string `yaml:"basic_auth_users"`
 }
 
+// ExistsUser returns true if a given user already exists, otherwise false.
+func (wc *WebConfig) ExistsUser(user string) bool {
+	_, ok := wc.BasicAuthUsers[user]
+	return ok
+}
+
+// WebConfigFileReaderWriter can both read from and write to the provided web.config.yaml file.
 type WebConfigFileReaderWriter struct {
 	configFile string
 }
 
+// NewWebConfigFileReaderWriter creates a reader/writer for the given config file.
 func NewWebConfigFileReaderWriter(configFile string) *WebConfigFileReaderWriter {
 	return &WebConfigFileReaderWriter{configFile: configFile}
 }
 
+// ReadWebConfig reads the given config file and returns a respective web config object.
 func (rw *WebConfigFileReaderWriter) ReadWebConfig() (*WebConfig, error) {
 	var webConfig = WebConfig{BasicAuthUsers: make(map[string]string)}
 
@@ -38,6 +50,7 @@ func (rw *WebConfigFileReaderWriter) ReadWebConfig() (*WebConfig, error) {
 	return &webConfig, nil
 }
 
+// WriteWebConfig takes a web config and writes it to the given config file.
 func (rw *WebConfigFileReaderWriter) WriteWebConfig(webConfig *WebConfig) error {
 	yamlData, err := yaml.Marshal(webConfig)
 	if err != nil {

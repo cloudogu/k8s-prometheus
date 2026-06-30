@@ -14,7 +14,7 @@ func CreateServer(config configuration.Configuration, manager manager) *http.Ser
 
 	serviceAccountGroup := r.Group("/serviceaccounts")
 	serviceAccountGroup.Use(ValidateAPIKey(config.ApiKey))
-	serviceAccountGroup.POST("/", serviceAccountCtrl.CreateAccount)
+	serviceAccountGroup.PUT("/", serviceAccountCtrl.CreateOrUpdateAccount)
 	serviceAccountGroup.DELETE("/:consumer", serviceAccountCtrl.DeleteAccount)
 	serviceAccountGroup.HEAD("/:consumer", serviceAccountCtrl.GetAccount)
 	serviceAccountGroup.GET("/:consumer", serviceAccountCtrl.GetAccount)

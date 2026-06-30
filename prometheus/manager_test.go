@@ -8,7 +8,7 @@ import (
 )
 
 func Test_NewManager(t *testing.T) {
-	t.Run("should creat new Manager", func(t *testing.T) {
+	t.Run("should create new Manager", func(t *testing.T) {
 		sut := NewManager("/some/file.yaml", &WebConfig{})
 
 		assert.Nil(t, sut.webConfig)
@@ -66,16 +66,52 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 		sut := &Manager{rw: mockRW, webConfig: webConfig}
 
-		credentials, err := sut.CreateServiceAccount("myConsumer", nil)
+		credentials, changeType, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{})
 
 		require.NoError(t, err)
 		assert.NotEqual(t, "", credentials["username"])
 		assert.Equal(t, "myConsumer", credentials["username"])
 		assert.NotEqual(t, "", credentials["password"])
+		assert.Equal(t, CredentialCreated, changeType)
 
 		hashedPassword, exists := sut.webConfig.BasicAuthUsers[credentials["username"]]
 		assert.True(t, exists)
 		assert.Nil(t, compareHashAndPassword(hashedPassword, credentials["password"]))
+	})
+	t.Run("should update service account and request demands an update", func(t *testing.T) {
+		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"myConsumer": "password1"}}
+		mockRW := NewMockWebConfigReaderWriter(t)
+		mockRW.EXPECT().WriteWebConfig(webConfig).Return(nil)
+
+		sut := &Manager{rw: mockRW, webConfig: webConfig}
+
+		credentials, changeType, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{RotateServiceAccountNow: true})
+
+		require.NoError(t, err)
+		assert.NotEqual(t, "", credentials["username"])
+		assert.Equal(t, "myConsumer", credentials["username"])
+		assert.NotEqual(t, "", credentials["password"])
+		assert.Equal(t, CredentialUpdated, changeType)
+
+		hashedPassword, exists := sut.webConfig.BasicAuthUsers[credentials["username"]]
+		assert.True(t, exists)
+		assert.Nil(t, compareHashAndPassword(hashedPassword, credentials["password"]))
+	})
+	t.Run("should not update existing service account", func(t *testing.T) {
+		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"myConsumer": "password1"}}
+		mockRW := NewMockWebConfigReaderWriter(t)
+
+		sut := &Manager{rw: mockRW, webConfig: webConfig}
+
+		credentials, changeType, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{RotateServiceAccountNow: false})
+
+		require.NoError(t, err)
+		assert.Empty(t, credentials)
+		assert.Equal(t, CredentialNoChange, changeType)
+
+		unchangedPassword, exists := sut.webConfig.BasicAuthUsers["myConsumer"]
+		assert.True(t, exists)
+		assert.Equal(t, unchangedPassword, "password1") // ignore any hashing issues here
 	})
 
 	t.Run("should fail to create service account on error reading config", func(t *testing.T) {
@@ -84,7 +120,7 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 		sut := &Manager{rw: mockRW}
 
-		_, err := sut.CreateServiceAccount("myConsumer", nil)
+		_, _, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{})
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
@@ -97,7 +133,7 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 		sut := &Manager{rw: mockRW, webConfig: webConfig}
 
-		_, err := sut.CreateServiceAccount("myConsumer", nil)
+		_, _, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{})
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
