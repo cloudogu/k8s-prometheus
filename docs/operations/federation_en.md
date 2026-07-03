@@ -44,6 +44,7 @@ metadata:
 stringData:
   web.presets.yaml: |
     basic_auth_users:
+      grafana-123abc: grafana-hashed-password
       prometheus-exposed: bcrypt-hashed-password
 ```
 
