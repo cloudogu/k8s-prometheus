@@ -2,7 +2,7 @@ global:
   networkPolicies:
     enabled: true
   ingress:
-    enabled: true
+    enabled: false
     className: k8s-ecosystem-ces-service
     path: /prometheus
   imagePullSecrets:
