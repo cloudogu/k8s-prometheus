@@ -104,7 +104,7 @@ node('docker') {
                     stage('Deploy SA Producer CRD') {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD']]) {
                             k3d.helm("registry login ${registry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'")
-                            k3d.helm("install k8s-dogu-operator-crd oci://${registry}/${registry_namespace}/k8s-serviceaccount-crd --version ${serviceAccountingCrdVersion}")
+                            k3d.helm("install k8s-serviceaccount-crd oci://${registry}/${registry_namespace}/k8s-serviceaccount-crd --version ${serviceAccountingCrdVersion}")
                         }
                     }
 
