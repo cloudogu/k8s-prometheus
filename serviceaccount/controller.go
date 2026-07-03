@@ -69,6 +69,11 @@ func (ctrl *Controller) GetAccount(c *gin.Context) {
 
 // CreateOrUpdateAccount provides an idempotent endpoint of creating or updating service accounts.
 func (ctrl *Controller) CreateOrUpdateAccount(c *gin.Context) {
+	if c.Request.Method != http.MethodPut {
+		c.JSON(http.StatusMethodNotAllowed, gin.H{"error": "wrong method"})
+		return
+	}
+
 	var request createOrUpdateRequest
 	if err := c.BindJSON(&request); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
