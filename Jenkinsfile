@@ -25,7 +25,7 @@ registryUrl = "registry.cloudogu.com"
 goVersion = "1.26.4"
 helmTargetDir = "target/k8s"
 helmChartDir = "${helmTargetDir}/helm"
-serviceAccountingCrdVersion="1.0.0"
+serviceAccountingCrdVersion="2.0.1"
 
 imageRepository = "cloudogu/${repositoryName}-auth"
 
@@ -104,7 +104,7 @@ node('docker') {
                     stage('Deploy SA Producer CRD') {
                         withCredentials([[$class: 'UsernamePasswordMultiBinding', credentialsId: 'harborhelmchartpush', usernameVariable: 'HARBOR_USERNAME', passwordVariable: 'HARBOR_PASSWORD']]) {
                             k3d.helm("registry login ${registry} --username '${HARBOR_USERNAME}' --password '${HARBOR_PASSWORD}'")
-                            k3d.helm("install k8s-dogu-operator-crd oci://${registry}/${registry_namespace}/k8s-auth-registration-crd --version ${serviceAccountingCrdVersion}")
+                            k3d.helm("install k8s-dogu-operator-crd oci://${registry}/${registry_namespace}/k8s-serviceaccount-crd --version ${serviceAccountingCrdVersion}")
                         }
                     }
 
