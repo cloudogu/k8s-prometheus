@@ -41,6 +41,7 @@ metadata:
 stringData:
   web.presets.yaml: |
     basic_auth_users:
+      grafana-123abc: grafana-hashed-password
       prometheus-exposed: bcrypt-hashed-password
 ```
 
@@ -48,6 +49,10 @@ Das Passwort muss mit bcrypt gehasht werden, z.B. mit folgendem Befehl aus dem `
 ```shell
   htpasswd -bnBC 10 "" <your-password> | tr -d ':\n' | sed 's/$2y/$2a/'
 ```
+
+Wichtig: Wenn zeitgleich der Zugriff durch Grafana funktionieren soll, muss das Name des Prometheus-Service-Accounts 
+und das zugehörige Passwort (bcrypt-gehashed) ebenfalls im ``k8s-prometheus-auth-presets`` Secret angegeben werden. Der Serviceaccount
+befindet sich im Secret ``grafana-config``.
 
 Prometheus muss anschließend neugestartet werden, damit der Auth-Proxy die Datei lädt.
 
