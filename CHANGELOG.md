@@ -6,7 +6,9 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
 - [#39] Update prometheus and dependencies
+  - helm chart: 75.3.5 -> 87.5.1
   - prometheus/prometheus: 3.4.1 -> 3.12.0
   - kube-state-metrics/kube-state-metrics: 2.15.0 -> 2.19.1
   - prometheus/node-exporter: 1.9.1 -> 1.11.1
