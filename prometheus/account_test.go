@@ -59,7 +59,7 @@ func Test_CompareHashAndPassword(t *testing.T) {
 
 func Test_GenerateRandomString(t *testing.T) {
 	t.Run("should generate string for alphabet", func(t *testing.T) {
-		randomString, err := generateRadomString("abc", 5)
+		randomString, err := generateRandomString("abc", 5)
 		require.NoError(t, err)
 
 		require.Len(t, randomString, 5)

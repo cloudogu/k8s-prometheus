@@ -12,12 +12,12 @@ import (
 const passwordAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()-_=+"
 
 func createNewAccount(consumer string) (string, string, error) {
-	password, err := generateRadomString(passwordAlphabet, 24)
+	password, err := generateRandomString(passwordAlphabet, 24)
 	if err != nil {
 		return "", "", fmt.Errorf("failed to generate password: %w", err)
 	}
 
-	return fmt.Sprintf("%s", consumer), password, nil
+	return consumer, password, nil
 }
 
 func hashPassword(password string) (string, error) {
@@ -34,7 +34,7 @@ func compareHashAndPassword(hashedPassword string, password string) error {
 	return bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(password))
 }
 
-func generateRadomString(alphabet string, length int) (string, error) {
+func generateRandomString(alphabet string, length int) (string, error) {
 	runeSlice := []rune(alphabet)
 	maxIndex := len(alphabet)
 
