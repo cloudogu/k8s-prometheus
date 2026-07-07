@@ -23,11 +23,11 @@ func Test_NewController(t *testing.T) {
 	})
 }
 
-func Test_CreateAccount(t *testing.T) {
+func Test_CreateOrUpdateAccount(t *testing.T) {
 	t.Run("should create new account", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		ginCtx, _ := gin.CreateTestContext(w)
-		req, err := http.NewRequest(http.MethodPost, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}}`))
+		req, err := http.NewRequest(http.MethodPut, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}}`))
 		require.NoError(t, err)
 		ginCtx.Request = req
 
@@ -44,7 +44,7 @@ func Test_CreateAccount(t *testing.T) {
 	t.Run("should update existing account but the credentials do not change", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		ginCtx, _ := gin.CreateTestContext(w)
-		req, err := http.NewRequest(http.MethodPost, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}, "behaviorParams":{"rotateServiceAccountNow": false}}`))
+		req, err := http.NewRequest(http.MethodPut, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}, "behaviorParams":{"rotateServiceAccountNow": false}}`))
 		require.NoError(t, err)
 		ginCtx.Request = req
 
@@ -63,7 +63,7 @@ func Test_CreateAccount(t *testing.T) {
 	t.Run("should update existing account but a credential rotation is forced", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		ginCtx, _ := gin.CreateTestContext(w)
-		req, err := http.NewRequest(http.MethodPost, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}, "behaviorParams":{"rotateServiceAccountNow": true}}`))
+		req, err := http.NewRequest(http.MethodPut, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}, "behaviorParams":{"rotateServiceAccountNow": true}}`))
 		require.NoError(t, err)
 		ginCtx.Request = req
 
@@ -83,7 +83,7 @@ func Test_CreateAccount(t *testing.T) {
 	t.Run("should fail to create new account for bad request", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		ginCtx, _ := gin.CreateTestContext(w)
-		req, err := http.NewRequest(http.MethodPost, "/serviceaccounts", strings.NewReader(`no valid JSON`))
+		req, err := http.NewRequest(http.MethodPut, "/serviceaccounts", strings.NewReader(`no valid JSON`))
 		require.NoError(t, err)
 		ginCtx.Request = req
 
@@ -96,11 +96,27 @@ func Test_CreateAccount(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, w.Code)
 		assert.Equal(t, `{"error":"invalid character 'o' in literal null (expecting 'u')"}`, w.Body.String())
 	})
+	t.Run("should fail with wrong HTTP method", func(t *testing.T) {
+		w := httptest.NewRecorder()
+		ginCtx, _ := gin.CreateTestContext(w)
+		req, err := http.NewRequest(http.MethodPost, "/serviceaccounts", strings.NewReader(`no valid JSON`))
+		require.NoError(t, err)
+		ginCtx.Request = req
+
+		mockManager := NewMockmanager(t)
+
+		ctrl := NewController(mockManager)
+
+		ctrl.CreateOrUpdateAccount(ginCtx)
+
+		assert.Equal(t, http.StatusMethodNotAllowed, w.Code)
+		assert.Equal(t, `{"error":"wrong method"}`, w.Body.String())
+	})
 
 	t.Run("should fail to create new account for missing consumer", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		ginCtx, _ := gin.CreateTestContext(w)
-		req, err := http.NewRequest(http.MethodPost, "/serviceaccounts", strings.NewReader(`{"no-consumer": "grafana", "params": {"a":"", "b":"", "c":""}}`))
+		req, err := http.NewRequest(http.MethodPut, "/serviceaccounts", strings.NewReader(`{"no-consumer": "grafana", "params": {"a":"", "b":"", "c":""}}`))
 		require.NoError(t, err)
 		ginCtx.Request = req
 
@@ -117,7 +133,7 @@ func Test_CreateAccount(t *testing.T) {
 	t.Run("should fail to create new account for error in manager", func(t *testing.T) {
 		w := httptest.NewRecorder()
 		ginCtx, _ := gin.CreateTestContext(w)
-		req, err := http.NewRequest(http.MethodPost, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}}`))
+		req, err := http.NewRequest(http.MethodPut, "/serviceaccounts", strings.NewReader(`{"consumer": "grafana", "params": {"a":"", "b":"", "c":""}}`))
 		require.NoError(t, err)
 		ginCtx.Request = req
 
