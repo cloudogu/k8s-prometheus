@@ -1,6 +1,7 @@
 package prometheus
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -273,4 +274,69 @@ func Test_ValidateAccount(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 	})
+}
+
+func TestManager_GetServiceAccount(t *testing.T) {
+	tests := []struct {
+		name      string
+		rw        func(t *testing.T) WebConfigReaderWriter
+		consumer  string
+		wantUser  map[string]string
+		wantFound bool
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name: "fail to get web config",
+			rw: func(t *testing.T) WebConfigReaderWriter {
+				m := NewMockWebConfigReaderWriter(t)
+				m.EXPECT().ReadWebConfig().Return(nil, assert.AnError)
+				return m
+			},
+			consumer:  "user",
+			wantUser:  nil,
+			wantFound: false,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, assert.AnError)
+			},
+		},
+		{
+			name: "consumer not found",
+			rw: func(t *testing.T) WebConfigReaderWriter {
+				m := NewMockWebConfigReaderWriter(t)
+				m.EXPECT().ReadWebConfig().Return(&WebConfig{BasicAuthUsers: make(map[string]string)}, nil)
+				return m
+			},
+			consumer:  "user",
+			wantUser:  nil,
+			wantFound: false,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "consumer found",
+			rw: func(t *testing.T) WebConfigReaderWriter {
+				m := NewMockWebConfigReaderWriter(t)
+				m.EXPECT().ReadWebConfig().Return(&WebConfig{BasicAuthUsers: map[string]string{"user": "password"}}, nil)
+				return m
+			},
+			consumer: "user",
+			wantUser: map[string]string{
+				"username": "user",
+			},
+			wantFound: true,
+			wantErr:   assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Manager{
+				rw: tt.rw(t),
+			}
+			gotUser, gotFound, err := m.GetServiceAccount(tt.consumer)
+			if !tt.wantErr(t, err, fmt.Sprintf("GetServiceAccount(%v)", tt.consumer)) {
+				return
+			}
+			assert.Equalf(t, tt.wantUser, gotUser, "GetServiceAccount(%v)", tt.consumer)
+			assert.Equalf(t, tt.wantFound, gotFound, "GetServiceAccount(%v)", tt.consumer)
+		})
+	}
 }
