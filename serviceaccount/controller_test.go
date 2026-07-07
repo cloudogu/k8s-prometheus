@@ -206,3 +206,120 @@ func Test_DeleteAccount(t *testing.T) {
 		assert.Equal(t, `{"error":"assert.AnError general error for testing"}`, w.Body.String())
 	})
 }
+
+func TestController_GetAccount(t *testing.T) {
+	type args struct {
+		method   string
+		consumer string
+	}
+	tests := []struct {
+		name       string
+		manager    func(t *testing.T) manager
+		args       args
+		wantStatus int
+		wantBody   string
+	}{
+		{
+			name: "fail on empty consumer",
+			manager: func(t *testing.T) manager {
+				m := NewMockmanager(t)
+				return m
+			},
+			args: args{
+				method:   http.MethodGet,
+				consumer: "",
+			},
+			wantStatus: http.StatusBadRequest,
+			wantBody:   `{"error":"consumer cannot be empty"}`,
+		},
+		{
+			name: "fail on getting service account",
+			manager: func(t *testing.T) manager {
+				m := NewMockmanager(t)
+				m.EXPECT().GetServiceAccount("grafana").Return(nil, false, assert.AnError)
+				return m
+			},
+			args: args{
+				method:   http.MethodGet,
+				consumer: "grafana",
+			},
+			wantStatus: http.StatusInternalServerError,
+			wantBody:   `{"error":"assert.AnError general error for testing"}`,
+		},
+		{
+			name: "not found",
+			manager: func(t *testing.T) manager {
+				m := NewMockmanager(t)
+				m.EXPECT().GetServiceAccount("grafana").Return(nil, false, nil)
+				return m
+			},
+			args: args{
+				method:   http.MethodGet,
+				consumer: "grafana",
+			},
+			wantStatus: http.StatusNotFound,
+			wantBody:   `{"error":"user not found"}`,
+		},
+		{
+			name: "return user on get",
+			manager: func(t *testing.T) manager {
+				m := NewMockmanager(t)
+				m.EXPECT().GetServiceAccount("grafana").Return(map[string]string{"grafana": "password"}, true, nil)
+				return m
+			},
+			args: args{
+				method:   http.MethodGet,
+				consumer: "grafana",
+			},
+			wantStatus: http.StatusOK,
+			wantBody:   `{"grafana":"password"}`,
+		},
+		{
+			name: "empty body on head",
+			manager: func(t *testing.T) manager {
+				m := NewMockmanager(t)
+				m.EXPECT().GetServiceAccount("grafana").Return(map[string]string{"grafana": "password"}, true, nil)
+				return m
+			},
+			args: args{
+				method:   http.MethodHead,
+				consumer: "grafana",
+			},
+			wantStatus: http.StatusOK,
+			wantBody:   ``,
+		},
+		{
+			name: "invalid method",
+			manager: func(t *testing.T) manager {
+				m := NewMockmanager(t)
+				m.EXPECT().GetServiceAccount("grafana").Return(map[string]string{"grafana": "password"}, true, nil)
+				return m
+			},
+			args: args{
+				method:   http.MethodPost,
+				consumer: "grafana",
+			},
+			wantStatus: http.StatusMethodNotAllowed,
+			wantBody:   `{"error":"wrong method"}`,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			ctrl := &Controller{
+				manager: tt.manager(t),
+			}
+
+			w := httptest.NewRecorder()
+			ginCtx, _ := gin.CreateTestContext(w)
+			req, err := http.NewRequest(tt.args.method, "/serviceaccounts", nil)
+			require.NoError(t, err)
+			ginCtx.Request = req
+			ginCtx.AddParam("consumer", tt.args.consumer)
+
+			ctrl.GetAccount(ginCtx)
+
+			assert.Equal(t, tt.wantStatus, w.Code)
+			assert.Equal(t, tt.wantBody, w.Body.String())
+		})
+	}
+}
