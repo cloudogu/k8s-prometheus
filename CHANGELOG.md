@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - [#41] Mirroring values to air gapped environments
 
+## [v87.5.1-1] - 2026-07-03
+### Changed
+- [#39] Update prometheus and dependencies
+  - helm chart: 75.3.5 -> 87.5.1
+  - prometheus/prometheus: 3.4.1 -> 3.12.0
+  - kube-state-metrics/kube-state-metrics: 2.15.0 -> 2.19.1
+  - prometheus/node-exporter: 1.9.1 -> 1.11.1
+  - ingress-nginx/kube-webhook-certgen: 1.5.4 -> 1.6.9
+  - prometheus-operator/prometheus-operator: 0.82.2 -> 0.92.1
+  - prometheus-operator/prometheus-config-reloader: 0.82.2 -> 0.92.1
+
 ## [v75.3.5-7] - 2026-04-29
 ### Added
 - [#36] Add default retentionSize config to prevent `no space left on device` errors in every system
