@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [v87.5.1-3] - 2026-07-08
+### Fixed
+- [#45] Fix images in `component-patch-tpl.yaml` for airgapped environments.
+
 ## [v87.5.1-2] - 2026-07-07
 ### Fixed
 - [#41] Mirroring values to air gapped environments

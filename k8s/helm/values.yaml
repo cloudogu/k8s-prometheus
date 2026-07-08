@@ -43,7 +43,8 @@ kube-prometheus-stack:
     image:
       registry: quay.io
       repository: prometheus/node-exporter
-      tag: "v1.11.1"
+      tag: "v1.11.1-distroless"
+      distroless: false # Do not set "-distroless" again; it is already part of the tag
     resources:
       limits:
         memory: 105M
@@ -86,7 +87,7 @@ kube-prometheus-stack:
       image:
         registry: quay.io
         repository: prometheus/prometheus
-        tag: v3.13.0
+        tag: v3.13.0-distroless
       resources:
         limits:
           memory: 1039M
@@ -119,7 +120,7 @@ kube-prometheus-stack:
             optional: true
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:87.5.1-2
+          image: cloudogu/k8s-prometheus-auth:87.5.1-3
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL
