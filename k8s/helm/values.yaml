@@ -86,7 +86,7 @@ kube-prometheus-stack:
       image:
         registry: quay.io
         repository: prometheus/prometheus
-        tag: v3.13.0
+        tag: v3.13.0-distroless
       resources:
         limits:
           memory: 1039M
