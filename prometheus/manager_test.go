@@ -1,14 +1,15 @@
 package prometheus
 
 import (
+	"fmt"
+	"testing"
+
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"strings"
-	"testing"
 )
 
 func Test_NewManager(t *testing.T) {
-	t.Run("should creat new Manager", func(t *testing.T) {
+	t.Run("should create new Manager", func(t *testing.T) {
 		sut := NewManager("/some/file.yaml", &WebConfig{})
 
 		assert.Nil(t, sut.webConfig)
@@ -66,16 +67,52 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 		sut := &Manager{rw: mockRW, webConfig: webConfig}
 
-		credentials, err := sut.CreateServiceAccount("myConsumer", nil)
+		credentials, changeType, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{})
 
 		require.NoError(t, err)
 		assert.NotEqual(t, "", credentials["username"])
-		assert.True(t, strings.HasPrefix(credentials["username"], "myConsumer-"))
+		assert.Equal(t, "myConsumer", credentials["username"])
 		assert.NotEqual(t, "", credentials["password"])
+		assert.Equal(t, CredentialCreated, changeType)
 
 		hashedPassword, exists := sut.webConfig.BasicAuthUsers[credentials["username"]]
 		assert.True(t, exists)
 		assert.Nil(t, compareHashAndPassword(hashedPassword, credentials["password"]))
+	})
+	t.Run("should update service account and request demands an update", func(t *testing.T) {
+		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"myConsumer": "password1"}}
+		mockRW := NewMockWebConfigReaderWriter(t)
+		mockRW.EXPECT().WriteWebConfig(webConfig).Return(nil)
+
+		sut := &Manager{rw: mockRW, webConfig: webConfig}
+
+		credentials, changeType, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{RotateServiceAccountNow: true})
+
+		require.NoError(t, err)
+		assert.NotEqual(t, "", credentials["username"])
+		assert.Equal(t, "myConsumer", credentials["username"])
+		assert.NotEqual(t, "", credentials["password"])
+		assert.Equal(t, CredentialUpdated, changeType)
+
+		hashedPassword, exists := sut.webConfig.BasicAuthUsers[credentials["username"]]
+		assert.True(t, exists)
+		assert.Nil(t, compareHashAndPassword(hashedPassword, credentials["password"]))
+	})
+	t.Run("should not update existing service account", func(t *testing.T) {
+		webConfig := &WebConfig{BasicAuthUsers: map[string]string{"myConsumer": "password1"}}
+		mockRW := NewMockWebConfigReaderWriter(t)
+
+		sut := &Manager{rw: mockRW, webConfig: webConfig}
+
+		credentials, changeType, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{RotateServiceAccountNow: false})
+
+		require.NoError(t, err)
+		assert.Empty(t, credentials)
+		assert.Equal(t, CredentialNoChange, changeType)
+
+		unchangedPassword, exists := sut.webConfig.BasicAuthUsers["myConsumer"]
+		assert.True(t, exists)
+		assert.Equal(t, unchangedPassword, "password1") // ignore any hashing issues here
 	})
 
 	t.Run("should fail to create service account on error reading config", func(t *testing.T) {
@@ -84,7 +121,7 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 		sut := &Manager{rw: mockRW}
 
-		_, err := sut.CreateServiceAccount("myConsumer", nil)
+		_, _, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{})
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
@@ -97,7 +134,7 @@ func Test_CreateServiceAccount(t *testing.T) {
 
 		sut := &Manager{rw: mockRW, webConfig: webConfig}
 
-		_, err := sut.CreateServiceAccount("myConsumer", nil)
+		_, _, err := sut.CreateOrUpdateServiceAccount("myConsumer", nil, BehaviorParams{})
 
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
@@ -237,4 +274,69 @@ func Test_ValidateAccount(t *testing.T) {
 		require.Error(t, err)
 		assert.ErrorIs(t, err, assert.AnError)
 	})
+}
+
+func TestManager_GetServiceAccount(t *testing.T) {
+	tests := []struct {
+		name      string
+		rw        func(t *testing.T) WebConfigReaderWriter
+		consumer  string
+		wantUser  map[string]string
+		wantFound bool
+		wantErr   assert.ErrorAssertionFunc
+	}{
+		{
+			name: "fail to get web config",
+			rw: func(t *testing.T) WebConfigReaderWriter {
+				m := NewMockWebConfigReaderWriter(t)
+				m.EXPECT().ReadWebConfig().Return(nil, assert.AnError)
+				return m
+			},
+			consumer:  "user",
+			wantUser:  nil,
+			wantFound: false,
+			wantErr: func(t assert.TestingT, err error, i ...interface{}) bool {
+				return assert.ErrorIs(t, err, assert.AnError)
+			},
+		},
+		{
+			name: "consumer not found",
+			rw: func(t *testing.T) WebConfigReaderWriter {
+				m := NewMockWebConfigReaderWriter(t)
+				m.EXPECT().ReadWebConfig().Return(&WebConfig{BasicAuthUsers: make(map[string]string)}, nil)
+				return m
+			},
+			consumer:  "user",
+			wantUser:  nil,
+			wantFound: false,
+			wantErr:   assert.NoError,
+		},
+		{
+			name: "consumer found",
+			rw: func(t *testing.T) WebConfigReaderWriter {
+				m := NewMockWebConfigReaderWriter(t)
+				m.EXPECT().ReadWebConfig().Return(&WebConfig{BasicAuthUsers: map[string]string{"user": "password"}}, nil)
+				return m
+			},
+			consumer: "user",
+			wantUser: map[string]string{
+				"username": "user",
+			},
+			wantFound: true,
+			wantErr:   assert.NoError,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			m := &Manager{
+				rw: tt.rw(t),
+			}
+			gotUser, gotFound, err := m.GetServiceAccount(tt.consumer)
+			if !tt.wantErr(t, err, fmt.Sprintf("GetServiceAccount(%v)", tt.consumer)) {
+				return
+			}
+			assert.Equalf(t, tt.wantUser, gotUser, "GetServiceAccount(%v)", tt.consumer)
+			assert.Equalf(t, tt.wantFound, gotFound, "GetServiceAccount(%v)", tt.consumer)
+		})
+	}
 }

@@ -1,0 +1,20 @@
+apiVersion: k8s.cloudogu.com/v2
+kind: ServiceAccountProducer
+metadata:
+  name: {{ include "k8s-prometheus.name" . }}
+  labels:
+    {{- include "k8s-prometheus.labels" . | nindent 4 }}
+spec:
+  producer: {{ include "k8s-prometheus.name" . }}
+  http:
+    endpoint: "http://{{ include "k8s-prometheus.name" . }}.{{ .Release.Namespace }}.svc:8080/serviceaccounts"
+    authSecret:
+      name: "k8s-prometheus-service-account-api"
+      key: "apiKey"
+    priority: 1
+    # Prometheus does not support producer-specific account parameters.
+    return:
+      username:
+        description: "Generated technical username for the service account"
+      password:
+        description: "Password for the generated service account"

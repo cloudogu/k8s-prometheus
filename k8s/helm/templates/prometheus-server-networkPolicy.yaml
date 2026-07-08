@@ -2,7 +2,7 @@
 apiVersion: networking.k8s.io/v1
 kind: NetworkPolicy
 metadata:
-  name: {{ include "kube-prometheus-stack.name" . }}-prometheus-server-allow-dogu-operator
+  name: {{ include "kube-prometheus-stack.name" . }}-prometheus-server-allow-sa-management
   labels:
     {{- include "prometheus.server.labels" . | nindent 4 }}
 spec:
@@ -16,6 +16,9 @@ spec:
         - podSelector:
             matchLabels:
               app.kubernetes.io/name: k8s-dogu-operator
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: service-account-operator
       ports:
         - port: 8087
           protocol: TCP

@@ -6,6 +6,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+Heads-up: Breaking Change ahead
+### Changed
+- The Service Account Producer Endpoint changed to conform to the updated Service Account Producer API.
+   - existing service accounts will be used as-is
+
+### Added
+- Added a Service Account Producer resource to comply with
 
 ## [v87.5.1-3] - 2026-07-08
 ### Fixed
