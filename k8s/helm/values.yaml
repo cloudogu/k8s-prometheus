@@ -43,7 +43,8 @@ kube-prometheus-stack:
     image:
       registry: quay.io
       repository: prometheus/node-exporter
-      tag: "v1.11.1"
+      tag: "v1.11.1-distroless"
+      distroless: false # Do not set "-distroless" again; it is already part of the tag
     resources:
       limits:
         memory: 105M
