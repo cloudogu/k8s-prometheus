@@ -1,0 +1,30 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: test-resize-prom
+spec:
+  template:
+    spec:
+      serviceAccountName: job-resize
+      containers:
+        - name: prometheus-resize-pvc
+          image: dtzar/helm-kubectl:4.3.0
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              HELM_RELEASE_NAME=test-prom-k8s-prometheus-prometheus
+              PVC_SIZE=20Gi
+            
+              PATCH_PAUSE_SIZE=$(printf '{"spec": {"paused": true, "storage": {"volumeClaimTemplate": {"spec": {"resources": {"requests": {"storage":"%s"}}}}}}}' $PVC_SIZE)
+              kubectl patch prometheus/${HELM_RELEASE_NAME} --patch "$PATCH_PAUSE_SIZE" --type merge
+              
+              PATCH_SIZE=$(printf '{"spec": {"resources": {"requests": {"storage":"%s"}}}}' $PVC_SIZE)
+              for p in $(kubectl get pvc -l operator.prometheus.io/name=${HELM_RELEASE_NAME} -o jsonpath='{range .items[*]}{.metadata.name} {end}'); do \
+                kubectl patch pvc/${p} --patch "$PATCH_SIZE"; \
+              done
+              
+              kubectl delete statefulset -l operator.prometheus.io/name=${HELM_RELEASE_NAME} --cascade=orphan
+              
+              kubectl patch prometheus/${HELM_RELEASE_NAME} --patch '{"spec": {"paused": false}}' --type merge
+      restartPolicy: Never
+  backoffLimit: 1
