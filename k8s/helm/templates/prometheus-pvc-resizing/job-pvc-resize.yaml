@@ -1,0 +1,41 @@
+{{ $kubePromStack := index .Values "kube-prometheus-stack" }}
+{{- /* If no storage size is specified, prometheus uses an ephemeral storage. In this case, we don't need this job. */ -}}
+{{- if $kubePromStack.prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+  labels:
+    {{- include "kube-prometheus-stack.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+      containers:
+        - name: prometheus-resize-pvc
+          image: dtzar/helm-kubectl:4.3.0
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+
+              PROM_OP_NAME={{ template "kube-prometheus-stack.prometheus.crname" . }}
+              PVC_SIZE={{ $kubePromStack.prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage }}
+
+              PATCH_SIZE=$(printf '{"spec": {"resources": {"requests": {"storage":"%s"}}}}' $PVC_SIZE)
+              for p in $(kubectl get pvc -l operator.prometheus.io/name=${PROM_OP_NAME} -o jsonpath='{range .items[*]}{.metadata.name} {end}'); do \
+                kubectl patch pvc/${p} --patch "$PATCH_SIZE"; \
+              done
+            
+              PATCH_PAUSE_SIZE=$(printf '{"spec": {"paused": true, "storage": {"volumeClaimTemplate": {"spec": {"resources": {"requests": {"storage":"%s"}}}}}}}' $PVC_SIZE)
+              kubectl patch prometheus/${PROM_OP_NAME} --patch "$PATCH_PAUSE_SIZE" --type merge
+              
+              kubectl delete statefulset -l operator.prometheus.io/name=${PROM_OP_NAME} --cascade=orphan
+              
+              kubectl patch prometheus/${PROM_OP_NAME} --patch '{"spec": {"paused": false}}' --type merge
+      restartPolicy: Never
+  backoffLimit: 0
+{{- end }}

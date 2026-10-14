@@ -1,0 +1,21 @@
+{{ $kubePromStack := index .Values "kube-prometheus-stack" }}
+{{- /* This role binding is part of the job to resize the PVC and only required if a storage size is specified. */ -}}
+{{- if $kubePromStack.prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage }}
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+  labels:
+    {{- include "kube-prometheus-stack.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": post-upgrade
+    "helm.sh/hook-weight": "-5"
+    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+subjects:
+  - kind: ServiceAccount
+    name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+{{- end }}
