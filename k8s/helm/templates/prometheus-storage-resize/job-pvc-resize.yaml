@@ -4,18 +4,20 @@
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
   labels:
+    test: {{ include "kube-prometheus-stack.name" . }}
     {{- include "kube-prometheus-stack.labels" . | nindent 4 }}
+  {{- if .Values.prometheusStorageResize.annotations.job}}
   annotations:
-    "helm.sh/hook": post-upgrade
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- toYaml .Values.prometheusStorageResize.annotations.job | nindent 4 }}
+  {{- end}}
 spec:
   template:
     spec:
-      serviceAccountName: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+      serviceAccountName: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
       containers:
-        - name: prometheus-resize-pvc
+        - name: prometheus-storage-resize
           image: dtzar/helm-kubectl:4.3.0
           command: ["/bin/bash", "-c"]
           args:

@@ -11,6 +11,15 @@ authProxy:
   configPVC:
     storageClassName: null
     storage: 1Gi # Some cloud providers don't support less than 1 GiB
+prometheusStorageResize:
+  annotations:
+    job:
+      "helm.sh/hook": post-upgrade
+      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    jobRBAC:
+      "helm.sh/hook": post-upgrade
+      "helm.sh/hook-weight": "-5"
+      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 kube-prometheus-stack:
   grafana:
     enabled: false

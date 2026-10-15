@@ -4,18 +4,18 @@
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
 metadata:
-  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
   labels:
     {{- include "kube-prometheus-stack.labels" . | nindent 4 }}
+  {{- if .Values.prometheusStorageResize.annotations.jobRBAC}}
   annotations:
-    "helm.sh/hook": post-upgrade
-    "helm.sh/hook-weight": "-5"
-    "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    {{- toYaml .Values.prometheusStorageResize.annotations.jobRBAC | nindent 4 }}
+  {{- end}}
 subjects:
   - kind: ServiceAccount
-    name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+    name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
 roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: Role
-  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-pvc-resize
+  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
 {{- end }}
