@@ -1,8 +1,7 @@
 {{ $kubePromStack := index .Values "kube-prometheus-stack" }}
 {{- /* If no storage size is specified, prometheus uses an ephemeral storage. In this case, we don't need this job. */ -}}
-
-{{- if $kubePromStack.prometheus.prometheusSpec.storageSpec.volumeClaimTemplate }}
-{{- if $kubePromStack.prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage }}
+{{- $storage := dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil $kubePromStack }}
+{{- if $storage }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -27,7 +26,7 @@ spec:
               set -e
 
               PROM_OP_NAME={{ template "kube-prometheus-stack.prometheus.crname" . }}
-              PVC_SIZE={{ $kubePromStack.prometheus.prometheusSpec.storageSpec.volumeClaimTemplate.spec.resources.requests.storage }}
+              PVC_SIZE={{ $storage }}
 
               PATCH_SIZE=$(printf '{"spec": {"resources": {"requests": {"storage":"%s"}}}}' $PVC_SIZE)
               for p in $(kubectl get pvc -l operator.prometheus.io/name=${PROM_OP_NAME} -o jsonpath='{range .items[*]}{.metadata.name} {end}'); do \
@@ -42,5 +41,4 @@ spec:
               kubectl patch prometheus/${PROM_OP_NAME} --patch '{"spec": {"paused": false}}' --type merge
       restartPolicy: Never
   backoffLimit: 0
-{{- end }}
-{{- end }}
+{{- end  -}}
