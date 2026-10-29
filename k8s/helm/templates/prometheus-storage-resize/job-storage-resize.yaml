@@ -1,15 +1,14 @@
 {{ $kubePromStack := index .Values "kube-prometheus-stack" }}
-{{- /* If no storage size is specified, prometheus uses an ephemeral storage. In this case, we don't need this job. */ -}}
 {{- $storage := dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil $kubePromStack }}
+{{- /* If no storage size is specified, we don't need this job. */ -}}
 {{- if $storage }}
 apiVersion: batch/v1
 kind: Job
 metadata:
   name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
   labels:
-    test: {{ include "kube-prometheus-stack.name" . }}
-    {{- include "kube-prometheus-stack.labels" . | nindent 4 }}
-  {{- if .Values.prometheusStorageResize.annotations.job}}
+    {{- include "k8s-prometheus.labels" . | nindent 4 }}
+  {{- if .Values.prometheusStorageResize.annotations.job }}
   annotations:
     {{- toYaml .Values.prometheusStorageResize.annotations.job | nindent 4 }}
   {{- end}}
@@ -19,7 +18,7 @@ spec:
       serviceAccountName: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
       containers:
         - name: prometheus-storage-resize
-          image: dtzar/helm-kubectl:4.3.0
+          image: {{ .Values.prometheusStorageResize.image }}
           command: ["/bin/bash", "-c"]
           args:
             - |

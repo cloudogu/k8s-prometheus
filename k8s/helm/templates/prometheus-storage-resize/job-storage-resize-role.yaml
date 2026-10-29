@@ -1,13 +1,13 @@
 {{ $kubePromStack := index .Values "kube-prometheus-stack" }}
-{{- /* This role is part of the job to resize the PVC and only required if a storage size is specified. */ -}}
 {{- $storage := dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil $kubePromStack }}
+{{- /* If no storage size is specified, we don't need this job. */ -}}
 {{- if $storage }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:
   name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
   labels:
-    {{- include "kube-prometheus-stack.labels" . | nindent 4 }}
+    {{- include "k8s-prometheus.labels" . | nindent 4 }}
     {{- if .Values.prometheusStorageResize.annotations.jobRBAC}}
   annotations:
     {{- toYaml .Values.prometheusStorageResize.annotations.jobRBAC | nindent 4 }}

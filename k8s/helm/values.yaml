@@ -12,6 +12,7 @@ authProxy:
     storageClassName: null
     storage: 1Gi # Some cloud providers don't support less than 1 GiB
 prometheusStorageResize:
+  image: dtzar/helm-kubectl:4.3.0
   annotations:
     job:
       "helm.sh/hook": post-upgrade
