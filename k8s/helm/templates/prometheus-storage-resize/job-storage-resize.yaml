@@ -1,0 +1,43 @@
+{{ $kubePromStack := index .Values "kube-prometheus-stack" }}
+{{- $storage := dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil $kubePromStack }}
+{{- /* If no storage size is specified, we don't need this job. */ -}}
+{{- if $storage }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
+  labels:
+    {{- include "k8s-prometheus.labels" . | nindent 4 }}
+  {{- if .Values.prometheusStorageResize.annotations.job }}
+  annotations:
+    {{- toYaml .Values.prometheusStorageResize.annotations.job | nindent 4 }}
+  {{- end}}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
+      containers:
+        - name: prometheus-storage-resize
+          image: {{ .Values.prometheusStorageResize.image }}
+          command: ["/bin/bash", "-c"]
+          args:
+            - |
+              set -e
+
+              PROM_OP_NAME={{ template "kube-prometheus-stack.prometheus.crname" . }}
+              PVC_SIZE={{ $storage }}
+
+              PATCH_SIZE=$(printf '{"spec": {"resources": {"requests": {"storage":"%s"}}}}' $PVC_SIZE)
+              for p in $(kubectl get pvc -l operator.prometheus.io/name=${PROM_OP_NAME} -o jsonpath='{range .items[*]}{.metadata.name} {end}'); do \
+                kubectl patch pvc/${p} --patch "$PATCH_SIZE"; \
+              done
+            
+              PATCH_PAUSE_SIZE=$(printf '{"spec": {"paused": true, "storage": {"volumeClaimTemplate": {"spec": {"resources": {"requests": {"storage":"%s"}}}}}}}' $PVC_SIZE)
+              kubectl patch prometheus/${PROM_OP_NAME} --patch "$PATCH_PAUSE_SIZE" --type merge
+              
+              kubectl delete statefulset -l operator.prometheus.io/name=${PROM_OP_NAME} --cascade=orphan
+              
+              kubectl patch prometheus/${PROM_OP_NAME} --patch '{"spec": {"paused": false}}' --type merge
+      restartPolicy: Never
+  backoffLimit: 0
+{{- end  -}}

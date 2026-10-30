@@ -67,10 +67,38 @@ spec:
           retention: 20d
 ```
 
-### Storage & Retention
+### Storage 
+
 Prometheus stores all metrics in the volume of the associated StatefulSet.
 The size of the volume can be specified in the values under `kube-prometheus-stack.prometheus.promtheusSpec.storageSpec` (see [example above](#example-valuesyamloverwrite)).
-The default size of the volume is `4Gi` (4 gigabytes).
+The default size of the volume is `10Gi` (10 gigabytes).
+
+After an upgrade, a Helm hook adjusts the size of the volume. The annotations for this job can be configured.
+There are two sets of annotations, one for the job and another for the resources that provide permissions for the job.
+The annotation `helm.sh/hook-weight` ensures that the permissions for the job are created before the job runs.
+
+If the job is completed successfully, the job and the associated permissions are deleted.
+
+For use with ArgoCD, the annotations must be adjusted accordingly.
+[Here are instructions for doing so.](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
+
+```yaml
+# default configuration
+prometheusStorageResize:
+  annotations:
+    # annotations for the job
+    job:
+      "helm.sh/hook": post-upgrade
+      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    # annotations for the resources that provide authorization; Role, RoleBinding, ServiceAccount
+    jobRBAC:
+      "helm.sh/hook": post-upgrade
+      "helm.sh/hook-weight": "-5"
+      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+```
+
+
+### Retention
 
 The retention specifies the period for which the metrics are to be saved.
 This can be specified in the values under `kube-prometheus-stack.prometheus.promtheusSpec.retention` (see [example above](#example-valuesyamloverwrite)).

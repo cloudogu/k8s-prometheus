@@ -6,19 +6,23 @@
 {{- end }}
 {{- end }}
 
-{{/* All-in-one labels */}}
-{{- define "k8s-prometheus.labels" -}}
-app: ces
+{{- define "k8s-prometheus.shared.labels" -}}
 helm.sh/chart: {{- printf " %s-%s" .Chart.Name .Chart.Version | replace "+" "_" | trunc 63 | trimSuffix "-" }}
 app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
 app.kubernetes.io/managed-by: {{ .Release.Service }}
-k8s.cloudogu.com/component.name: {{ include "k8s-prometheus.name" . }}
 k8s.cloudogu.com/component.version: {{ .Chart.AppVersion | quote }}
 {{- end -}}
 
+{{/* All-in-one labels */}}
+{{- define "k8s-prometheus.labels" -}}
+{{- include "k8s-prometheus.shared.labels" .  }}
+app: ces
+k8s.cloudogu.com/component.name: {{ include "k8s-prometheus.name" . }}
+{{- end -}}
+
 {{- define "prometheus.server.labels" -}}
-{{- include "k8s-prometheus.labels" . | nindent 2 }}
-{{- include "prometheus.server.selectorLabels" . | nindent 2 }}
+{{ include "k8s-prometheus.shared.labels" .  }}
+{{ include "prometheus.server.selectorLabels" .  }}
 {{- end -}}
 
 {{- define "prometheus.server.selectorLabels" -}}
@@ -55,8 +59,9 @@ app.kubernetes.io/instance: k8s-prometheus
 {{- end -}}
 
 {{- define "prometheus.operator.labels" -}}
+{{ include "k8s-prometheus.shared.labels" .  }}
 {{ template "prometheus.operator.selectorLabels" . }}
-{{ template "k8s-prometheus.labels" . }}
+k8s.cloudogu.com/component.name: {{ include "k8s-prometheus.name" . }}
 {{- end -}}
 
 {{- define "prometheus.operator.selectorLabels" -}}
@@ -64,7 +69,5 @@ app: {{ template "kube-prometheus-stack.name" . }}-operator
 app.kubernetes.io/name: {{ template "kube-prometheus-stack.name" . }}-prometheus-operator
 app.kubernetes.io/component: prometheus-operator
 {{- end -}}
-
-
 
 

@@ -8,8 +8,11 @@ values:
     configReloader: quay.io/prometheus-operator/prometheus-config-reloader:v0.92.1
     prometheusServer: quay.io/prometheus/prometheus:v3.13.0-distroless
     authSidecar: cloudogu/k8s-prometheus-auth:87.5.1-3
+    prometheusStorageResize: dtzar/helm-kubectl:4.3.0
 patches:
   values.yaml:
+    prometheusStorageResize:
+      image: "{{ registryFrom .images.prometheusStorageResize }}/{{ repositoryFrom .images.prometheusStorageResize }}:{{ tagFrom .images.prometheusStorageResize }}"
     kube-prometheus-stack:
       kube-state-metrics:
         image:
