@@ -17,10 +17,12 @@ COPY configuration configuration
 COPY prometheus prometheus
 COPY proxy proxy
 COPY serviceaccount serviceaccount
+COPY cli/storageresize/main.go cli/storageresize/main.go
 
 # Build
 RUN go mod vendor
 RUN go build -mod=vendor -o target/k8s-prometheus-auth
+RUN go build -mod=vendor -o target/storageresize cli/storageresize/main.go
 
 
 # Use distroless as minimal base image to package the manager binary
@@ -32,6 +34,7 @@ LABEL maintainer="hello@cloudogu.com" \
 
 WORKDIR /
 COPY --from=builder /workspace/target/k8s-prometheus-auth .
+COPY --from=builder /workspace/target/storageresize .
 
 # the linter has a problem with the valid colon-syntax
 # dockerfile_lint - ignore

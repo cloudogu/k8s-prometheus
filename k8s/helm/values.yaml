@@ -12,17 +12,18 @@ authProxy:
     storageClassName: null
     storage: 1Gi # Some cloud providers don't support less than 1 GiB
 prometheusStorageResize:
-  image: dtzar/helm-kubectl:4.3.0
+  image: cloudogu/k8s-prometheus-auth:87.5.1-3
+  logLevel: "INFO"
   annotations:
     # annotations for the job
     job:
       "helm.sh/hook": post-upgrade
-      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    #  "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
     # annotations for the resources that provide authorization; Role, RoleBinding, ServiceAccount
     jobRBAC:
       "helm.sh/hook": post-upgrade
       "helm.sh/hook-weight": "-5"
-      "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
+    #  "helm.sh/hook-delete-policy": before-hook-creation,hook-succeeded
 kube-prometheus-stack:
   grafana:
     enabled: false

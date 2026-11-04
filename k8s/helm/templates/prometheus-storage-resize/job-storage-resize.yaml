@@ -19,25 +19,12 @@ spec:
       containers:
         - name: prometheus-storage-resize
           image: {{ .Values.prometheusStorageResize.image }}
-          command: ["/bin/bash", "-c"]
-          args:
-            - |
-              set -e
-
-              PROM_OP_NAME={{ template "kube-prometheus-stack.prometheus.crname" . }}
-              PVC_SIZE={{ $storage }}
-
-              PATCH_SIZE=$(printf '{"spec": {"resources": {"requests": {"storage":"%s"}}}}' $PVC_SIZE)
-              for p in $(kubectl get pvc -l operator.prometheus.io/name=${PROM_OP_NAME} -o jsonpath='{range .items[*]}{.metadata.name} {end}'); do \
-                kubectl patch pvc/${p} --patch "$PATCH_SIZE"; \
-              done
-            
-              PATCH_PAUSE_SIZE=$(printf '{"spec": {"paused": true, "storage": {"volumeClaimTemplate": {"spec": {"resources": {"requests": {"storage":"%s"}}}}}}}' $PVC_SIZE)
-              kubectl patch prometheus/${PROM_OP_NAME} --patch "$PATCH_PAUSE_SIZE" --type merge
-              
-              kubectl delete statefulset -l operator.prometheus.io/name=${PROM_OP_NAME} --cascade=orphan
-              
-              kubectl patch prometheus/${PROM_OP_NAME} --patch '{"spec": {"paused": false}}' --type merge
+          command: ["/storageresize"]
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.prometheusStorageResize.logLevel }}
+            - name: PROM_OP_NAME
+              value: {{ template "kube-prometheus-stack.prometheus.crname" . }}
       restartPolicy: Never
   backoffLimit: 0
 {{- end  -}}

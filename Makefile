@@ -7,8 +7,8 @@ LINT_VERSION=v2.9.0
 MOCKERY_VERSION=v2.42.2
 .DEFAULT_GOAL:=help
 
-IMAGE?=cloudogu/${ARTIFACT_ID}-auth:${VERSION}
-IMAGE_DEV?=${CES_REGISTRY_HOST}${CES_REGISTRY_NAMESPACE}/${ARTIFACT_ID}-auth
+IMAGE?=cloudogu/${ARTIFACT_ID}-tools:${VERSION}
+IMAGE_DEV?=${CES_REGISTRY_HOST}${CES_REGISTRY_NAMESPACE}/${ARTIFACT_ID}-tools
 IMAGE_IMPORT_TARGET=image-import
 K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
 HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo
@@ -34,9 +34,11 @@ helm-values-replace-image-repo: $(BINARY_YQ)
 	@if [[ ${STAGE} == "development" ]]; then \
 		echo "Setting dev image repo in target values.yaml to ${IMAGE_DEV}:${VERSION}..." ;\
 		$(BINARY_YQ) -i e ".kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image=\"${IMAGE_DEV}:${VERSION}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+		$(BINARY_YQ) -i e ".prometheusStorageResize.image = \"${IMAGE_DEV}:${VERSION}\"" ${K8S_COMPONENT_TARGET_VALUES} ; \
 	else \
 		echo "Setting prod image repo in target values.yaml to ${IMAGE}..." ;\
 		$(BINARY_YQ) -i e ".kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image=\"${IMAGE}\"" ${K8S_COMPONENT_TARGET_VALUES} ;\
+		$(BINARY_YQ) -i e ".prometheusStorageResize.image = \"${IMAGE}\"" ${K8S_COMPONENT_TARGET_VALUES} ; \
 	fi
 
 .PHONY: prometheus-release
