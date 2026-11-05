@@ -16,6 +16,7 @@ import (
 	"github.com/cloudogu/k8s-prometheus/auth/proxy"
 	"github.com/cloudogu/k8s-prometheus/auth/serviceaccount"
 
+	"github.com/cloudogu/k8s-prometheus/auth/internal/logging"
 	"github.com/gin-gonic/gin"
 )
 
@@ -27,7 +28,7 @@ func main() {
 
 	gin.SetMode(gin.ReleaseMode)
 
-	configureLogger(config)
+	logging.ConfigureLogger(config.LogLevel)
 
 	webPresets := &prometheus.WebConfig{}
 	if config.WebPresetsFile != "" {
@@ -82,21 +83,4 @@ func main() {
 	<-ctx.Done()
 	slog.Info("shutdown-timeout of 5 seconds reached")
 	slog.Info("exiting")
-}
-
-func configureLogger(conf configuration.Configuration) {
-	var level slog.Level
-	var err = level.UnmarshalText([]byte(conf.LogLevel))
-	if err != nil {
-		slog.Error("error parsing log level. Setting log level to INFO.", "err", err)
-		level = slog.LevelInfo
-	}
-
-	logger := slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
-		AddSource: false,
-		Level:     level,
-	}))
-	slog.SetDefault(logger)
-
-	slog.Info("configured logger", "level", level.String())
 }

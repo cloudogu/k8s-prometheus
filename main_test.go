@@ -3,10 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/cloudogu/k8s-prometheus/auth/configuration"
-	"github.com/stretchr/testify/assert"
-	"github.com/stretchr/testify/require"
-	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -14,6 +10,9 @@ import (
 	"syscall"
 	"testing"
 	"time"
+
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func Test_main(t *testing.T) {
@@ -119,28 +118,6 @@ func checkPort(port int, available bool) bool {
 	case <-resultChan:
 		return true
 	}
-}
-
-func Test_configureLogger(t *testing.T) {
-	t.Run("should configure logger with log-level from config", func(t *testing.T) {
-		conf := configuration.Configuration{LogLevel: "DEBUG"}
-
-		configureLogger(conf)
-
-		textHandler, ok := slog.Default().Handler().(*slog.TextHandler)
-		require.True(t, ok)
-		assert.True(t, textHandler.Enabled(context.TODO(), slog.LevelDebug))
-	})
-
-	t.Run("should configure logger with log-level info if config not valid", func(t *testing.T) {
-		conf := configuration.Configuration{LogLevel: "NO_NO_LOG"}
-
-		configureLogger(conf)
-
-		textHandler, ok := slog.Default().Handler().(*slog.TextHandler)
-		require.True(t, ok)
-		assert.True(t, textHandler.Enabled(context.TODO(), slog.LevelInfo))
-	})
 }
 
 // Function to send signal to the process
