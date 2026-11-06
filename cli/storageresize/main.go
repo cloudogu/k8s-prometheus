@@ -13,4 +13,5 @@ func main() {
 		slog.Error("Error while resize storage", "error", err)
 		os.Exit(1)
 	}
+
 }

@@ -12,6 +12,8 @@ func TestReadConfig(t *testing.T) {
 	t.Run("should read config", func(t *testing.T) {
 		err := os.Setenv(logLevelEnv, "ERROR")
 		require.NoError(t, err)
+		err = os.Setenv(namespaceEnv, "ns1")
+		require.NoError(t, err)
 		err = os.Setenv(promOpNameEnv, "aOpName")
 		require.NoError(t, err)
 		err = os.Setenv(storageSizeEnv, "10Gi")
@@ -23,11 +25,14 @@ func TestReadConfig(t *testing.T) {
 			logLevel:         "ERROR",
 			promOperatorName: "aOpName",
 			storageSize:      "10Gi",
+			namespace:        "ns1",
 		}, cfg)
 	})
 
 	t.Run("should use the default log level if none is specified", func(t *testing.T) {
 		err := os.Unsetenv(logLevelEnv)
+		require.NoError(t, err)
+		err = os.Setenv(namespaceEnv, "ns1")
 		require.NoError(t, err)
 		err = os.Setenv(promOpNameEnv, "aOpName")
 		require.NoError(t, err)
@@ -40,8 +45,26 @@ func TestReadConfig(t *testing.T) {
 		assert.Equal(t, defaultLogLevel, cfg.logLevel)
 	})
 
+	t.Run("should return an error if no namespace is specified", func(t *testing.T) {
+		err := os.Setenv(logLevelEnv, "ERROR")
+		require.NoError(t, err)
+		err = os.Unsetenv(namespaceEnv)
+		require.NoError(t, err)
+		err = os.Setenv(promOpNameEnv, "aOpName")
+		require.NoError(t, err)
+		err = os.Setenv(storageSizeEnv, "10Gi")
+		require.NoError(t, err)
+
+		_, err = readConfig()
+
+		assert.Error(t, err)
+		assert.ErrorContains(t, err, namespaceEnv)
+	})
+
 	t.Run("should return an error if no prometheus operator name is specified", func(t *testing.T) {
 		err := os.Setenv(logLevelEnv, "ERROR")
+		require.NoError(t, err)
+		err = os.Setenv(namespaceEnv, "ns1")
 		require.NoError(t, err)
 		err = os.Unsetenv(promOpNameEnv)
 		require.NoError(t, err)
@@ -57,6 +80,8 @@ func TestReadConfig(t *testing.T) {
 	t.Run("should return an error if no storage size is specified", func(t *testing.T) {
 		err := os.Unsetenv(logLevelEnv)
 		require.NoError(t, err)
+		err = os.Setenv(namespaceEnv, "ns1")
+		require.NoError(t, err)
 		err = os.Setenv(promOpNameEnv, "aOpName")
 		require.NoError(t, err)
 		err = os.Unsetenv(storageSizeEnv)
@@ -70,6 +95,8 @@ func TestReadConfig(t *testing.T) {
 
 	t.Run("should return an error if the storage size has the wrong format", func(t *testing.T) {
 		err := os.Setenv(logLevelEnv, "ERROR")
+		require.NoError(t, err)
+		err = os.Setenv(namespaceEnv, "ns1")
 		require.NoError(t, err)
 		err = os.Setenv(promOpNameEnv, "aOpName")
 		require.NoError(t, err)

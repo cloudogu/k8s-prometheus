@@ -10,6 +10,7 @@ import (
 const (
 	errorFormat     = "environment variable %s is required but not set"
 	logLevelEnv     = "LOG_LEVEL"
+	namespaceEnv    = "NAMESPACE"
 	promOpNameEnv   = "PROM_OP_NAME"
 	storageSizeEnv  = "STORAGE_SIZE"
 	defaultLogLevel = "INFO"
@@ -19,6 +20,7 @@ type config struct {
 	logLevel         string
 	promOperatorName string
 	storageSize      string
+	namespace        string
 }
 
 func readConfig() (*config, error) {
@@ -26,6 +28,11 @@ func readConfig() (*config, error) {
 	cfg.logLevel = os.Getenv(logLevelEnv)
 	if cfg.logLevel == "" {
 		cfg.logLevel = defaultLogLevel
+	}
+
+	cfg.namespace = os.Getenv(namespaceEnv)
+	if cfg.namespace == "" {
+		return nil, fmt.Errorf(errorFormat, namespaceEnv)
 	}
 
 	cfg.promOperatorName = os.Getenv(promOpNameEnv)
@@ -40,7 +47,7 @@ func readConfig() (*config, error) {
 	_, err := resource.ParseQuantity(cfg.storageSize)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"parse the storage quantity '%s' from the %s environment variable: %v",
+			"parse the storage quantity '%s' from the %s environment variable: %w",
 			cfg.storageSize,
 			storageSizeEnv,
 			err,
