@@ -8,7 +8,8 @@ import (
 )
 
 func main() {
-	err := storageresize.ResizeStorage()
+	resizer := storageresize.NewResizeSteps()
+	err := storageresize.ResizeStorage(resizer)
 	if err != nil {
 		slog.Error("Error while resize storage", "error", err)
 		os.Exit(1)

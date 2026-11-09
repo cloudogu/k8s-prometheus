@@ -181,3 +181,67 @@ func newPrometheusForTest(name string, storageSize string) *monitoringv1.Prometh
 		},
 	}
 }
+
+func newResizeStepsForTest(k8sClient client.Client, storageSize string) *defaultResizeSteps {
+	return &defaultResizeSteps{
+		config: config{
+			promOperatorName: promOpNameForTest,
+			storageSize:      storageSize,
+			namespace:        nsForTest,
+		},
+		k8sClient: k8sClient,
+	}
+}
+
+type fakeResizeSteps struct {
+	configureError         error
+	createK8sClientError   error
+	patchPVCError          error
+	prometheusPauseErrors  []error
+	prometheusPauseCount   int
+	patchPrometheusError   error
+	deleteStatefulSetError error
+}
+
+func (f *fakeResizeSteps) configure() error {
+	if f.configureError != nil {
+		return f.configureError
+	}
+	return nil
+}
+
+func (f *fakeResizeSteps) createK8sClient() error {
+	if f.createK8sClientError != nil {
+		return f.createK8sClientError
+	}
+	return nil
+}
+
+func (f *fakeResizeSteps) patchPVCs(ctx context.Context) error {
+	if f.patchPVCError != nil {
+		return f.patchPVCError
+	}
+	return nil
+}
+
+func (f *fakeResizeSteps) setPrometheusPaused(ctx context.Context, pause bool) error {
+	if f.prometheusPauseErrors[f.prometheusPauseCount] != nil {
+		return f.prometheusPauseErrors[f.prometheusPauseCount]
+	}
+	f.prometheusPauseCount++
+	return nil
+}
+
+func (f *fakeResizeSteps) patchPrometheus(ctx context.Context) error {
+	if f.patchPrometheusError != nil {
+		return f.patchPrometheusError
+	}
+	return nil
+}
+
+func (f *fakeResizeSteps) deleteStatefulSet(ctx context.Context) error {
+	if f.deleteStatefulSetError != nil {
+		return f.deleteStatefulSetError
+	}
+	return nil
+}
