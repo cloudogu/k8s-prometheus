@@ -70,4 +70,12 @@ app.kubernetes.io/name: {{ template "kube-prometheus-stack.name" . }}-prometheus
 app.kubernetes.io/component: prometheus-operator
 {{- end -}}
 
+{{- define "job.resize.name" -}}
+{{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
+{{- end -}}
 
+{{- define "job.resize.storage" -}}
+{{- with get .Values "kube-prometheus-stack" -}}
+{{- dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil . }}
+{{- end -}}
+{{- end -}}

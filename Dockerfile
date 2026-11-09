@@ -18,6 +18,7 @@ COPY prometheus prometheus
 COPY proxy proxy
 COPY serviceaccount serviceaccount
 COPY cli/storageresize/main.go cli/storageresize/main.go
+COPY internal/ internal/
 
 # Build
 RUN go mod vendor
