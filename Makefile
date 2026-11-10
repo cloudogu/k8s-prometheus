@@ -13,6 +13,12 @@ IMAGE_IMPORT_TARGET=image-import
 K8S_COMPONENT_TARGET_VALUES = ${HELM_TARGET_DIR}/values.yaml
 HELM_POST_GENERATE_TARGETS = helm-values-replace-image-repo
 
+BINARY_AUTH=$(TARGET_DIR)/$(ARTIFACT_ID)
+BINARY_AUTH_SRC=cmd/auth/main.go
+
+BINARY_STORAGE_RESIZE=$(TARGET_DIR)/storageresize
+BINARY_STORAGE_RESIZE_SRC=cmd/storageresize/main.go
+
 ADDITIONAL_CLEAN=clean_charts
 clean_charts:
 	rm -rf ${K8S_HELM_RESSOURCES}/charts
@@ -50,3 +56,9 @@ prometheus-release: ${BINARY_YQ} ## Interactively starts the release workflow fo
 mocks: ${MOCKERY_BIN} ${MOCKERY_YAML} ## target is used to generate mocks for all interfaces in a project.
 	${MOCKERY_BIN}
 	@echo "Mocks successfully created."
+
+compile-generic:
+	@echo "Compile binary $(BINARY_AUTH)"
+	@$(GO_ENV_VARS) go build -mod=vendor -a -tags netgo,osusergo $(LDFLAGS) -o $(BINARY_AUTH) $(BINARY_AUTH_SRC)
+	@echo "Compile binary $(BINARY_STORAGE_RESIZE)"
+	@$(GO_ENV_VARS) go build -mod=vendor -a -tags netgo,osusergo $(LDFLAGS) -o $(BINARY_STORAGE_RESIZE) $(BINARY_STORAGE_RESIZE_SRC)
