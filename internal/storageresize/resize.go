@@ -4,6 +4,9 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/cloudogu/k8s-prometheus/auth/internal/logging"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
@@ -140,12 +143,15 @@ func (d *defaultResizeSteps) deleteStatefulSet(ctx context.Context) error {
 		client.MatchingLabels{"operator.prometheus.io/name": d.config.promOperatorName},
 		client.PropagationPolicy(metav1.DeletePropagationOrphan))
 	if err != nil {
-		return fmt.Errorf("delete statefulset: %w", err)
+		return fmt.Errorf("delete all statefulsets that belong to prometheus: %w", err)
 	}
 	return nil
 }
 
 func ResizeStorage(resizeSteps resizeSteps) error {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	err := resizeSteps.configure()
 	if err != nil {
 		return fmt.Errorf("configure %w", err)
@@ -156,7 +162,6 @@ func ResizeStorage(resizeSteps resizeSteps) error {
 		return fmt.Errorf("create k8s client: %w", err)
 	}
 
-	ctx := context.Background()
 	err = resizeSteps.patchPVCs(ctx)
 	if err != nil {
 		return fmt.Errorf("patch PVCs: %w", err)

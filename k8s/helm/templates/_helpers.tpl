@@ -73,9 +73,3 @@ app.kubernetes.io/component: prometheus-operator
 {{- define "job.resize.name" -}}
 {{ template "kube-prometheus-stack.prometheus.crname" . }}-storage-resize
 {{- end -}}
-
-{{- define "job.resize.storage" -}}
-{{- with get .Values "kube-prometheus-stack" -}}
-{{- dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil . }}
-{{- end -}}
-{{- end -}}
