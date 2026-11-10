@@ -3,9 +3,10 @@ package prometheus
 import (
 	"crypto/rand"
 	"fmt"
-	"golang.org/x/crypto/bcrypt"
 	"math/big"
 	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 const usernameAlphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

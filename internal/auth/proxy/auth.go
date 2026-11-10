@@ -3,10 +3,11 @@ package proxy
 import (
 	"encoding/base64"
 	"fmt"
-	"github.com/gin-gonic/gin"
 	"log/slog"
 	"net/http"
 	"strings"
+
+	"github.com/gin-gonic/gin"
 )
 
 type accountValidator interface {

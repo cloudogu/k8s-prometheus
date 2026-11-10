@@ -11,11 +11,10 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cloudogu/k8s-prometheus/auth/configuration"
-	"github.com/cloudogu/k8s-prometheus/auth/prometheus"
-	"github.com/cloudogu/k8s-prometheus/auth/proxy"
-	"github.com/cloudogu/k8s-prometheus/auth/serviceaccount"
-
+	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/configuration"
+	prometheus2 "github.com/cloudogu/k8s-prometheus/auth/internal/auth/prometheus"
+	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/proxy"
+	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/serviceaccount"
 	"github.com/cloudogu/k8s-prometheus/auth/internal/logging"
 	"github.com/gin-gonic/gin"
 )
@@ -30,16 +29,16 @@ func main() {
 
 	logging.ConfigureLogger(config.LogLevel)
 
-	webPresets := &prometheus.WebConfig{}
+	webPresets := &prometheus2.WebConfig{}
 	if config.WebPresetsFile != "" {
 		// if the file does not exist, an empty object will be returned
-		webPresets, err = prometheus.NewWebConfigFileReaderWriter(config.WebPresetsFile).ReadWebConfig()
+		webPresets, err = prometheus2.NewWebConfigFileReaderWriter(config.WebPresetsFile).ReadWebConfig()
 		if err != nil {
 			panic(fmt.Errorf("failed to parse web presets file: %w", err))
 		}
 	}
 
-	manager := prometheus.NewManager(config.WebConfigFile, webPresets)
+	manager := prometheus2.NewManager(config.WebConfigFile, webPresets)
 
 	serviceAccountSrv := serviceaccount.CreateServer(config, manager)
 	go func() {

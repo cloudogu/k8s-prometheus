@@ -1,9 +1,10 @@
 package proxy
 
 import (
-	"github.com/cloudogu/k8s-prometheus/auth/configuration"
-	"github.com/gin-gonic/gin"
 	"net/http"
+
+	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/configuration"
+	"github.com/gin-gonic/gin"
 )
 
 func CreateServer(config configuration.Configuration, av accountValidator) *http.Server {

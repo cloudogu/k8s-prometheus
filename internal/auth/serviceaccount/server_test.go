@@ -1,11 +1,12 @@
 package serviceaccount
 
 import (
-	"github.com/cloudogu/k8s-prometheus/auth/configuration"
+	"testing"
+
+	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/configuration"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"testing"
 )
 
 func Test_CreateServer(t *testing.T) {

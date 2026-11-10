@@ -12,18 +12,13 @@ COPY go.sum go.sum
 RUN go mod download
 
 # Copy the go source
-COPY main.go main.go
-COPY configuration configuration
-COPY prometheus prometheus
-COPY proxy proxy
-COPY serviceaccount serviceaccount
-COPY cli/storageresize/main.go cli/storageresize/main.go
+COPY cmd/ cmd/
 COPY internal/ internal/
 
 # Build
 RUN go mod vendor
-RUN go build -mod=vendor -o target/k8s-prometheus-auth
-RUN go build -mod=vendor -o target/storageresize cli/storageresize/main.go
+RUN go build -mod=vendor -o target/k8s-prometheus-auth cmd/auth/main.go
+RUN go build -mod=vendor -o target/storageresize cmd/storageresize/main.go
 
 
 # Use distroless as minimal base image to package the manager binary
