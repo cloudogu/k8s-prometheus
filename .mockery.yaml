@@ -1,12 +1,5 @@
-with-expecter: True
 all: True
-
-packages:
-  github.com/cloudogu/k8s-prometheus/auth:
-    config:
-      recursive: True
-      exclude: ["vendor"]
-      inpackage: true
-      include-auto-generated: false
-      filename: "mock_{{.InterfaceName}}_test.go"
-      dir: "{{.PackageName}}"
+inpackage: True
+testonly: True
+with-expecter: True
+keeptree: False

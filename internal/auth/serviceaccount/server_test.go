@@ -11,7 +11,7 @@ import (
 
 func Test_CreateServer(t *testing.T) {
 	t.Run("should successfully create new controller", func(t *testing.T) {
-		mockManager := NewMockmanager(t)
+		mockManager := newMockManager(t)
 		conf := configuration.Configuration{ApiKey: "test123"}
 
 		srv := CreateServer(conf, mockManager)
