@@ -45,7 +45,7 @@ kube-prometheus-stack:
     prometheusSpec:
       containers:
         - name: auth
-          image: cloudogu/k8s-prometheus-auth:2.50.1-1
+          image: cloudogu/k8s-prometheus-tools:2.50.1-1
           imagePullPolicy: Always
           env:
             - name: LOG_LEVEL

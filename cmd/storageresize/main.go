@@ -4,7 +4,7 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/cloudogu/k8s-prometheus/auth/internal/storageresize"
+	"github.com/cloudogu/k8s-prometheus/tools/internal/storageresize"
 )
 
 func main() {

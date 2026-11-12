@@ -11,11 +11,11 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/configuration"
-	prometheus2 "github.com/cloudogu/k8s-prometheus/auth/internal/auth/prometheus"
-	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/proxy"
-	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/serviceaccount"
-	"github.com/cloudogu/k8s-prometheus/auth/internal/logging"
+	"github.com/cloudogu/k8s-prometheus/tools/internal/auth/configuration"
+	prometheus2 "github.com/cloudogu/k8s-prometheus/tools/internal/auth/prometheus"
+	"github.com/cloudogu/k8s-prometheus/tools/internal/auth/proxy"
+	"github.com/cloudogu/k8s-prometheus/tools/internal/auth/serviceaccount"
+	"github.com/cloudogu/k8s-prometheus/tools/internal/logging"
 	"github.com/gin-gonic/gin"
 )
 

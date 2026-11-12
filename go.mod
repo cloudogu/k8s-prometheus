@@ -1,4 +1,4 @@
-module github.com/cloudogu/k8s-prometheus/auth
+module github.com/cloudogu/k8s-prometheus/tools
 
 go 1.27.4
 

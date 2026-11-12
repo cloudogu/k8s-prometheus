@@ -3,7 +3,7 @@ package proxy
 import (
 	"net/http"
 
-	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/configuration"
+	"github.com/cloudogu/k8s-prometheus/tools/internal/auth/configuration"
 	"github.com/gin-gonic/gin"
 )
 

@@ -3,7 +3,7 @@ package serviceaccount
 import (
 	"testing"
 
-	"github.com/cloudogu/k8s-prometheus/auth/internal/auth/configuration"
+	"github.com/cloudogu/k8s-prometheus/tools/internal/auth/configuration"
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

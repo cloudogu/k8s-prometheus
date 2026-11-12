@@ -17,7 +17,7 @@ COPY internal/ internal/
 
 # Build
 RUN go mod vendor
-RUN go build -mod=vendor -o target/k8s-prometheus-auth cmd/auth/main.go
+RUN go build -mod=vendor -o target/auth cmd/auth/main.go
 RUN go build -mod=vendor -o target/storageresize cmd/storageresize/main.go
 
 
@@ -25,11 +25,11 @@ RUN go build -mod=vendor -o target/storageresize cmd/storageresize/main.go
 # Refer to https://github.com/GoogleContainerTools/distroless for more details
 FROM gcr.io/distroless/static:nonroot
 LABEL maintainer="hello@cloudogu.com" \
-      NAME="k8s-prometheus-auth" \
+      NAME="k8s-prometheus-tools" \
       VERSION="87.5.1-3"
 
 WORKDIR /
-COPY --from=builder /workspace/target/k8s-prometheus-auth .
+COPY --from=builder /workspace/target/auth .
 COPY --from=builder /workspace/target/storageresize .
 
 # the linter has a problem with the valid colon-syntax
@@ -39,4 +39,4 @@ USER 65532:65532
 EXPOSE 8086
 EXPOSE 8087
 
-ENTRYPOINT ["/k8s-prometheus-auth"]
+ENTRYPOINT ["/auth"]
