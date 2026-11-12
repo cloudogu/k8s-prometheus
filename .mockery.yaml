@@ -1,5 +1,8 @@
-all: True
-inpackage: True
-testonly: True
-with-expecter: True
-keeptree: False
+pkgname: '{{.SrcPackageName}}'
+structname: '{{.Mock}}{{.InterfaceName | firstUpper}}'
+recursive: true
+template: testify
+packages:
+  github.com/cloudogu/k8s-prometheus/auth/internal/auth:
+    config:
+      all: true

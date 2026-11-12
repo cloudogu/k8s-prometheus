@@ -4,7 +4,6 @@ VERSION=87.5.1-3
 
 GOTAG=1.27.4
 LINT_VERSION=v2.15.0
-MOCKERY_VERSION=v2.53.8
 .DEFAULT_GOAL:=help
 
 IMAGE?=cloudogu/${ARTIFACT_ID}-tools:${VERSION}
@@ -51,11 +50,6 @@ helm-values-replace-image-repo: $(BINARY_YQ)
 prometheus-release: ${BINARY_YQ} ## Interactively starts the release workflow for k8s-prometheus
 	@echo "Starting git flow release..."
 	@build/make/release.sh k8s-prometheus
-
-#.PHONY: mocks
-#mocks: ${MOCKERY_BIN} ${MOCKERY_YAML} ## target is used to generate mocks for all interfaces in a project.
-#	${MOCKERY_BIN}
-#	@echo "Mocks successfully created."
 
 compile-generic:
 	@echo "Compile binary $(BINARY_AUTH)"
