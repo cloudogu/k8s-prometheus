@@ -1,12 +1,8 @@
-with-expecter: True
-all: True
-
+pkgname: '{{.SrcPackageName}}'
+structname: '{{.Mock}}{{.InterfaceName | firstUpper}}'
+recursive: true
+template: testify
 packages:
-  github.com/cloudogu/k8s-prometheus/auth:
+  github.com/cloudogu/k8s-prometheus/auth/internal/auth:
     config:
-      recursive: True
-      exclude: ["vendor"]
-      inpackage: true
-      include-auto-generated: false
-      filename: "mock_{{.InterfaceName}}_test.go"
-      dir: "{{.PackageName}}"
+      all: true

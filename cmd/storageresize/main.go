@@ -1,0 +1,18 @@
+package main
+
+import (
+	"log/slog"
+	"os"
+
+	"github.com/cloudogu/k8s-prometheus/tools/internal/storageresize"
+)
+
+func main() {
+	resizer := storageresize.NewResizeSteps()
+	err := storageresize.ResizeStorage(resizer)
+	if err != nil {
+		slog.Error("Error while resize storage", "error", err)
+		os.Exit(1)
+	}
+
+}
