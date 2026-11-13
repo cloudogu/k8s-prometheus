@@ -74,12 +74,15 @@ The size of the volume can be specified in the values under `kube-prometheus-sta
 The default size of the volume is `10Gi` (10 gigabytes).
 
 After an upgrade, a Helm hook adjusts the size of the volume. The annotations for this job can be configured.
-There are two sets of annotations, one for the job and another for the resources that provide permissions for the job.
-The annotation `helm.sh/hook-weight` ensures that the permissions for the job are created before the job runs.
+There are two sets of annotations: One for the job itself and a second for the resources that provide permissions 
+for the job. The annotation `helm.sh/hook-weight` ensures that the permissions for the job are created before 
+the job runs.
 
 If the job is completed successfully, the job and the associated permissions are deleted.
 
-For use with ArgoCD, the annotations must be adjusted accordingly.
+The YAML-Snippet below shows the default configuration for this job. These Annotations turn the job into a Helm hook.
+
+ArgoCD does not use Helm hooks. To convert the Job into a ArgoCD hook, the annotations must be adjusted.
 [Here are instructions for doing so.](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
 
 ```yaml

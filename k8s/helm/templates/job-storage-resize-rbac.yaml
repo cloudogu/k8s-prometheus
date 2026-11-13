@@ -1,7 +1,7 @@
 {{ $kubePromStack := index .Values "kube-prometheus-stack" }}
 {{- $storage := dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil $kubePromStack }}
-{{- /* If no storage size is specified, we don't need this job. */ -}}
-{{- if $storage }}
+{{- /* If no storage size is specified, we don't need these resources. */ -}}
+{{ if $storage }}
 apiVersion: rbac.authorization.k8s.io/v1
 kind: Role
 metadata:

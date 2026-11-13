@@ -74,17 +74,20 @@ Die Größe des Volumes kann in den values unter `kube-prometheus-stack.promethe
 Die Default-Größe des Volumes ist `10Gi` (10 Gigabyte).
 
 Nach einem Upgrade passt ein Helm-Hook die Größe des Volumes an. Die Annotations für diesen Job
-können konfiguriert werden. Es gibt zwei Sets von Annotations, eins für den Job und ein anders
+können konfiguriert werden. Es gibt zwei Sets von Annotations: Eins für den Job selbst und ein zweites
 für die Ressourcen, die die Berechtigung für den Job bereitstellen. Die Annotation `helm.sh/hook-weight`
 stellt sicher, dass die Berechtigungen für den Job erstellt werden, bevor dieser ausgeführt wird.
 
 Wird der Job erfolgreich beendet, wird der Job und die zugehörige Berechtigung gelöscht.
 
-Für die Verwendung mit ArgoCD müssen die Annotations entsprechend angepasst werden. 
-[Hier gibt es eine Anleitung dafür.](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
+Der folgende YAML-Ausschnitt aus der `values.yaml` zeigt die Standard-Konfiguration für den diesen Job. 
+Diese Annotations machen den Job zu einem Helm-Hook. 
+
+ArgoCD verwendet keine Helm-Hooks. Um den Job zu einem ArgoCD-Hook zu machen, müssen die Annotations 
+entsprechend angepasst werden. [Hier gibt es eine Anleitung dafür.](https://argo-cd.readthedocs.io/en/stable/user-guide/sync-waves/)
 
 ```yaml
-# default configuration
+# values.yaml
 prometheusStorageResize:
   annotations:
     # annotations for the job
