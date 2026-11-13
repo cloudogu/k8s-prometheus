@@ -11,7 +11,7 @@ const (
 	errorFormat     = "environment variable %s is required but not set"
 	logLevelEnv     = "LOG_LEVEL"
 	namespaceEnv    = "NAMESPACE"
-	promOpNameEnv   = "PROMETHUES_OPERATOR_NAME"
+	promOpNameEnv   = "PROMETHEUS_OPERATOR_NAME"
 	storageSizeEnv  = "STORAGE_SIZE"
 	defaultLogLevel = "INFO"
 )
