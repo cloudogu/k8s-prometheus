@@ -18,10 +18,12 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
+const prometheusOperatorNameLabel = "operator.prometheus.io/name"
+
 type resizeSteps interface {
 	patchPVCs(ctx context.Context) error
 	setPrometheusPaused(ctx context.Context, pause bool) error
-	patchPrometheus(ctx context.Context) error
+	patchPrometheusVolumeClaimTemplate(ctx context.Context) error
 	deleteStatefulSet(ctx context.Context) error
 }
 
@@ -56,19 +58,19 @@ func CreateK8sClient() (client.Client, error) {
 }
 
 func (d *defaultResizeSteps) patchPVCs(ctx context.Context) error {
-	slog.Info(fmt.Sprintf("patch storage=%s of PVC's with label 'operator.prometheus.io/name=%s'", d.config.storageSize, d.config.promOperatorName))
+	slog.Info("patch storage size of PVC's", "size", d.config.storageSize, prometheusOperatorNameLabel, d.config.promOperatorName)
 
 	pvcList := &corev1.PersistentVolumeClaimList{}
 	err := d.k8sClient.List(ctx, pvcList,
 		client.InNamespace(d.config.namespace),
-		client.MatchingLabels{"operator.prometheus.io/name": d.config.promOperatorName})
+		client.MatchingLabels{prometheusOperatorNameLabel: d.config.promOperatorName})
 	if err != nil {
 		return fmt.Errorf("get list of PVCs: %w", err)
 	}
 
 	storageQuantity, err := resource.ParseQuantity(d.config.storageSize)
 	if err != nil {
-		return fmt.Errorf("parse storage quantity '%s': %w", d.config.storageSize, err)
+		return fmt.Errorf("parse storage quantity %q: %w", d.config.storageSize, err)
 	}
 
 	for _, pvc := range pvcList.Items {
@@ -76,7 +78,7 @@ func (d *defaultResizeSteps) patchPVCs(ctx context.Context) error {
 		pvc.Spec.Resources.Requests[corev1.ResourceStorage] = storageQuantity
 		patchErr := d.k8sClient.Patch(ctx, &pvc, client.MergeFrom(pvcBeforePatch))
 		if patchErr != nil {
-			return fmt.Errorf("patch PVC '%s' storage to %s: %w", pvc.GetName(), d.config.storageSize, patchErr)
+			return fmt.Errorf("patch PVC %q storage to %q: %w", pvc.GetName(), d.config.storageSize, patchErr)
 		}
 	}
 
@@ -84,7 +86,7 @@ func (d *defaultResizeSteps) patchPVCs(ctx context.Context) error {
 }
 
 func (d *defaultResizeSteps) setPrometheusPaused(ctx context.Context, pause bool) error {
-	slog.Info(fmt.Sprintf("set prometheus resource spec.paused=%v", pause))
+	slog.Info("set prometheus resource paused", "spec.paused", pause)
 
 	prom := &monitoringv1.Prometheus{}
 	err := d.k8sClient.Get(ctx, types.NamespacedName{Name: d.config.promOperatorName, Namespace: d.config.namespace}, prom)
@@ -95,14 +97,14 @@ func (d *defaultResizeSteps) setPrometheusPaused(ctx context.Context, pause bool
 	prom.Spec.Paused = pause
 	err = d.k8sClient.Patch(ctx, prom, client.MergeFrom(promBeforePatch))
 	if err != nil {
-		return fmt.Errorf("patch prometheus resource spec.paused=%v,  %w", pause, err)
+		return fmt.Errorf("patch prometheus resource spec.paused=%t:  %w", pause, err)
 	}
 
 	return nil
 }
 
-func (d *defaultResizeSteps) patchPrometheus(ctx context.Context) error {
-	slog.Info(fmt.Sprintf("patch prometheus resource spec.storage.volumeClaimTemplate.spec.resources.requests.storage=%s", d.config.storageSize))
+func (d *defaultResizeSteps) patchPrometheusVolumeClaimTemplate(ctx context.Context) error {
+	slog.Info("patch prometheus VolumeClaimTemplate", "size", d.config.storageSize)
 
 	prom := &monitoringv1.Prometheus{}
 	err := d.k8sClient.Get(ctx, types.NamespacedName{Name: d.config.promOperatorName, Namespace: d.config.namespace}, prom)
@@ -112,29 +114,26 @@ func (d *defaultResizeSteps) patchPrometheus(ctx context.Context) error {
 
 	storageQuantity, err := resource.ParseQuantity(d.config.storageSize)
 	if err != nil {
-		return fmt.Errorf("parse storage quantity '%s': %w", d.config.storageSize, err)
+		return fmt.Errorf("parse storage quantity %q: %w", d.config.storageSize, err)
 	}
 
 	promBeforePatch := prom.DeepCopy()
 	prom.Spec.Storage.VolumeClaimTemplate.Spec.Resources.Requests[corev1.ResourceStorage] = storageQuantity
 	err = d.k8sClient.Patch(ctx, prom, client.MergeFrom(promBeforePatch))
 	if err != nil {
-		return fmt.Errorf(
-			"patch prometheus resource spec.storage.volumeClaimTemplate.spec.resources.requests.storage=%s: %w",
-			d.config.storageSize, err,
-		)
+		return fmt.Errorf("patch prometheus VolumeClaimTemplate size %q: %w", d.config.storageSize, err)
 	}
 
 	return nil
 }
 
 func (d *defaultResizeSteps) deleteStatefulSet(ctx context.Context) error {
-	slog.Info(fmt.Sprintf("delete statefulset with label 'operator.prometheus.io/name=%s'", d.config.promOperatorName))
+	slog.Info("delete statefulset", prometheusOperatorNameLabel, d.config.promOperatorName)
 
 	statefulSet := &appsv1.StatefulSet{}
 	err := d.k8sClient.DeleteAllOf(ctx, statefulSet,
 		client.InNamespace(d.config.namespace),
-		client.MatchingLabels{"operator.prometheus.io/name": d.config.promOperatorName},
+		client.MatchingLabels{prometheusOperatorNameLabel: d.config.promOperatorName},
 		client.PropagationPolicy(metav1.DeletePropagationOrphan))
 	if err != nil {
 		return fmt.Errorf("delete all statefulsets that belong to prometheus: %w", err)
@@ -153,10 +152,10 @@ func ResizeStorage(resizeSteps resizeSteps) error {
 
 	err = resizeSteps.setPrometheusPaused(ctx, true)
 	if err != nil {
-		return fmt.Errorf("pause prometheus reconciliation %w", err)
+		return fmt.Errorf("pause prometheus reconciliation: %w", err)
 	}
 
-	err = resizeSteps.patchPrometheus(ctx)
+	err = resizeSteps.patchPrometheusVolumeClaimTemplate(ctx)
 	if err != nil {
 		return fmt.Errorf("patch prometheus: %w", err)
 	}
@@ -168,7 +167,7 @@ func ResizeStorage(resizeSteps resizeSteps) error {
 
 	err = resizeSteps.setPrometheusPaused(ctx, false)
 	if err != nil {
-		return fmt.Errorf("continue prometheus reconciliation %w", err)
+		return fmt.Errorf("continue prometheus reconciliation: %w", err)
 	}
 
 	return nil

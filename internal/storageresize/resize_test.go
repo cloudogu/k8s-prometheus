@@ -13,6 +13,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
 
+var testCtx = context.Background()
+
 func TestNewResizeSteps(t *testing.T) {
 	t.Run("should set the fields correctly", func(t *testing.T) {
 		cfg := &Config{}
@@ -26,16 +28,16 @@ func TestNewResizeSteps(t *testing.T) {
 }
 
 func TestPatchPVCs(t *testing.T) {
-	t.Run("should only patch PVCs that are part of prometheus", func(t *testing.T) {
+	t.Run("should only patch those two PVCs that are part of prometheus", func(t *testing.T) {
 		pvcList := newPVCListForTest(
 			newPVCForTest(t, "pvc1", "10Gi", map[string]string{
-				"operator.prometheus.io/name": promOpNameForTest,
+				prometheusOperatorNameLabel: promOpNameForTest,
 			}),
 			newPVCForTest(t, "pvc2", "10Gi", map[string]string{
-				"operator.prometheus.io/name": promOpNameForTest,
+				prometheusOperatorNameLabel: promOpNameForTest,
 			}),
 			newPVCForTest(t, "pvc3", "5Gi", map[string]string{
-				"operator.prometheus.io/name": "not_the_right_prom_op_name",
+				prometheusOperatorNameLabel: "not_the_right_prom_op_name",
 			}),
 			newPVCForTest(t, "pvc4", "5Gi", map[string]string{
 				"example.com/name": "aValue",
@@ -47,20 +49,22 @@ func TestPatchPVCs(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.patchPVCs(context.Background())
+		err := resizeStps.patchPVCs(testCtx)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 1, counter.listCount)
 		assert.Equal(t, 2, counter.patchCount)
 		assert.Equal(t, []string{"pvc1", "pvc2"}, counter.patchedPVCs)
 
+		expectedPvcQuantities := []resource.Quantity{
+			resource.MustParse("20Gi"),
+			resource.MustParse("20Gi"),
+		}
+		actualPvcQuantities := counter.patchedPVCStorageQuantities
 		quantitiesAreEqual := slices.EqualFunc(
-			counter.patchedPVCStorageQuantities,
-			[]resource.Quantity{
-				resource.MustParse("20Gi"),
-				resource.MustParse("20Gi"),
-			},
-			func(a *resource.Quantity, b resource.Quantity) bool { return a.Cmp(b) == 0 },
+			expectedPvcQuantities,
+			actualPvcQuantities,
+			func(a resource.Quantity, b resource.Quantity) bool { return a.Equal(b) },
 		)
 		assert.True(t, quantitiesAreEqual)
 	})
@@ -73,7 +77,7 @@ func TestPatchPVCs(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.patchPVCs(context.Background())
+		err := resizeStps.patchPVCs(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "listError")
@@ -87,7 +91,7 @@ func TestPatchPVCs(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "XXGi")
 
-		err := resizeStps.patchPVCs(context.Background())
+		err := resizeStps.patchPVCs(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "storage")
@@ -96,7 +100,7 @@ func TestPatchPVCs(t *testing.T) {
 	t.Run("should propagate a client patch error", func(t *testing.T) {
 		pvcList := newPVCListForTest(
 			newPVCForTest(t, "pvc1", "10Gi", map[string]string{
-				"operator.prometheus.io/name": promOpNameForTest,
+				prometheusOperatorNameLabel: promOpNameForTest,
 			}),
 		)
 		counter := &callCounter{patchError: errors.New("patchError")}
@@ -105,7 +109,7 @@ func TestPatchPVCs(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.patchPVCs(context.Background())
+		err := resizeStps.patchPVCs(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "patchError")
@@ -121,7 +125,7 @@ func TestSetPrometheusPaused(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(context.Background(), true)
+		err := resizeStps.setPrometheusPaused(testCtx, true)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 1, counter.getCount)
@@ -137,7 +141,7 @@ func TestSetPrometheusPaused(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(context.Background(), false)
+		err := resizeStps.setPrometheusPaused(testCtx, false)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 1, counter.getCount)
@@ -153,7 +157,7 @@ func TestSetPrometheusPaused(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(context.Background(), false)
+		err := resizeStps.setPrometheusPaused(testCtx, false)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "getError")
@@ -167,7 +171,7 @@ func TestSetPrometheusPaused(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(context.Background(), false)
+		err := resizeStps.setPrometheusPaused(testCtx, false)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "patchError")
@@ -183,7 +187,7 @@ func TestPatchPrometheus(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.patchPrometheus(context.Background())
+		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
 
 		assert.NoError(t, err)
 		assert.Equal(t, 1, counter.getCount)
@@ -199,7 +203,7 @@ func TestPatchPrometheus(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.patchPrometheus(context.Background())
+		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "getError")
@@ -213,7 +217,7 @@ func TestPatchPrometheus(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "XXGi")
 
-		err := resizeStps.patchPrometheus(context.Background())
+		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "storage")
@@ -227,7 +231,7 @@ func TestPatchPrometheus(t *testing.T) {
 			Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.patchPrometheus(context.Background())
+		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "patchError")
@@ -240,7 +244,7 @@ func TestDeleteStatefulSet(t *testing.T) {
 		fakeClient := newFakeClientBuilderWithCounter(t, counter).Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.deleteStatefulSet(context.Background())
+		err := resizeStps.deleteStatefulSet(testCtx)
 
 		assert.NoError(t, err)
 		assert.Equal(t, "StatefulSet", counter.deleteAllOfType)
@@ -254,7 +258,7 @@ func TestDeleteStatefulSet(t *testing.T) {
 		fakeClient := newFakeClientBuilderWithCounter(t, counter).Build()
 		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.deleteStatefulSet(context.Background())
+		err := resizeStps.deleteStatefulSet(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "deleteAllOfError")

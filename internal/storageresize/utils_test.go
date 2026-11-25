@@ -39,7 +39,7 @@ type callCounter struct {
 	patchCount                   int
 	patchError                   error
 	patchedPVCs                  []string
-	patchedPVCStorageQuantities  []*resource.Quantity
+	patchedPVCStorageQuantities  []resource.Quantity
 	patchedPromPaused            promPaused
 	patchedPromStorageQuantity   *resource.Quantity
 	deleteAllOfError             error
@@ -77,7 +77,7 @@ func (c *callCounter) patchCall(ctx context.Context, client client.WithWatch, ob
 			return assert.AnError
 		}
 		c.patchedPVCs = append(c.patchedPVCs, pvc.GetName())
-		c.patchedPVCStorageQuantities = append(c.patchedPVCStorageQuantities, pvc.Spec.Resources.Requests.Storage())
+		c.patchedPVCStorageQuantities = append(c.patchedPVCStorageQuantities, *pvc.Spec.Resources.Requests.Storage())
 	}
 
 	if reflect.TypeOf(obj) == reflect.TypeFor[*monitoringv1.Prometheus]() {
@@ -143,11 +143,9 @@ func newPVCForTest(t *testing.T, name string, storageSize string, labels map[str
 	require.NoError(t, err)
 
 	return corev1.PersistentVolumeClaim{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: nsForTest,
-			Labels:    labels,
-		},
+		Name:      name,
+		Namespace: nsForTest,
+		Labels:    labels,
 		Spec: corev1.PersistentVolumeClaimSpec{
 			Resources: corev1.VolumeResourceRequirements{
 				Requests: map[corev1.ResourceName]resource.Quantity{
@@ -160,10 +158,8 @@ func newPVCForTest(t *testing.T, name string, storageSize string, labels map[str
 
 func newPrometheusForTest(name string, storageSize string) *monitoringv1.Prometheus {
 	return &monitoringv1.Prometheus{
-		ObjectMeta: metav1.ObjectMeta{
-			Name:      name,
-			Namespace: nsForTest,
-		},
+		Name:      name,
+		Namespace: nsForTest,
 		Spec: monitoringv1.PrometheusSpec{
 			CommonPrometheusFields: monitoringv1.CommonPrometheusFields{
 				Storage: &monitoringv1.StorageSpec{
@@ -232,7 +228,7 @@ func (f *fakeResizeSteps) setPrometheusPaused(ctx context.Context, pause bool) e
 	return nil
 }
 
-func (f *fakeResizeSteps) patchPrometheus(ctx context.Context) error {
+func (f *fakeResizeSteps) patchPrometheusVolumeClaimTemplate(ctx context.Context) error {
 	if f.patchPrometheusError != nil {
 		return f.patchPrometheusError
 	}
