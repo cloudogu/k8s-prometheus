@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	errorFormat     = "environment variable %s is required but not set"
+	errorFormat     = "environment variable %q is required but not set"
 	logLevelEnv     = "LOG_LEVEL"
 	namespaceEnv    = "NAMESPACE"
 	promOpNameEnv   = "PROMETHEUS_OPERATOR_NAME"
@@ -47,7 +47,7 @@ func readConfig() (*config, error) {
 	_, err := resource.ParseQuantity(cfg.storageSize)
 	if err != nil {
 		return nil, fmt.Errorf(
-			"parse the storage quantity '%s' from the %s environment variable: %w",
+			"parse the storage quantity %q from the %q environment variable: %w",
 			cfg.storageSize,
 			storageSizeEnv,
 			err,
