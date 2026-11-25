@@ -8,7 +8,6 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/cloudogu/k8s-prometheus/tools/internal/logging"
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -20,8 +19,6 @@ import (
 )
 
 type resizeSteps interface {
-	configure() error
-	createK8sClient() error
 	patchPVCs(ctx context.Context) error
 	setPrometheusPaused(ctx context.Context, pause bool) error
 	patchPrometheus(ctx context.Context) error
@@ -29,36 +26,33 @@ type resizeSteps interface {
 }
 
 type defaultResizeSteps struct {
-	config    config
+	config    *Config
 	k8sClient client.Client
 }
 
-func NewResizeSteps() *defaultResizeSteps {
-	return &defaultResizeSteps{}
-}
-
-func (d *defaultResizeSteps) configure() error {
-	cfg, err := readConfig()
-	if err != nil {
-		return fmt.Errorf("read config %w", err)
+func NewResizeSteps(config *Config, k8sClient client.Client) *defaultResizeSteps {
+	return &defaultResizeSteps{
+		config:    config,
+		k8sClient: k8sClient,
 	}
-	logging.ConfigureLogger(cfg.logLevel)
-	d.config = *cfg
-	return nil
 }
 
-func (d *defaultResizeSteps) createK8sClient() error {
-	k8sClientConfig := ctrl.GetConfigOrDie()
+// CreateK8sClient reads the Kubernetes configuration and creates the k8s client. It also adds the schema
+// used by Prometheus to the k8s client.
+func CreateK8sClient() (client.Client, error) {
+	k8sClientConfig, err := ctrl.GetConfig()
+	if err != nil {
+		return nil, fmt.Errorf("get config for the kubernetes api server: %w", err)
+	}
 	k8sClient, err := client.New(k8sClientConfig, client.Options{})
 	if err != nil {
-		return fmt.Errorf("create k8s client: %w", err)
+		return nil, fmt.Errorf("create k8s client: %w", err)
 	}
 	err = monitoringv1.AddToScheme(k8sClient.Scheme())
 	if err != nil {
-		return fmt.Errorf("register scheme for prometheus CR: %w", err)
+		return nil, fmt.Errorf("register scheme for prometheus CR: %w", err)
 	}
-	d.k8sClient = k8sClient
-	return nil
+	return k8sClient, nil
 }
 
 func (d *defaultResizeSteps) patchPVCs(ctx context.Context) error {
@@ -152,17 +146,7 @@ func ResizeStorage(resizeSteps resizeSteps) error {
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	err := resizeSteps.configure()
-	if err != nil {
-		return fmt.Errorf("configure %w", err)
-	}
-
-	err = resizeSteps.createK8sClient()
-	if err != nil {
-		return fmt.Errorf("create k8s client: %w", err)
-	}
-
-	err = resizeSteps.patchPVCs(ctx)
+	err := resizeSteps.patchPVCs(ctx)
 	if err != nil {
 		return fmt.Errorf("patch PVCs: %w", err)
 	}

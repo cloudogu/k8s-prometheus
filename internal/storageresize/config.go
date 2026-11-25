@@ -16,18 +16,18 @@ const (
 	defaultLogLevel = "INFO"
 )
 
-type config struct {
-	logLevel         string
+type Config struct {
+	LogLevel         string
 	promOperatorName string
 	storageSize      string
 	namespace        string
 }
 
-func readConfig() (*config, error) {
-	cfg := &config{}
-	cfg.logLevel = os.Getenv(logLevelEnv)
-	if cfg.logLevel == "" {
-		cfg.logLevel = defaultLogLevel
+func ReadConfigFromEnv() (*Config, error) {
+	cfg := &Config{}
+	cfg.LogLevel = os.Getenv(logLevelEnv)
+	if cfg.LogLevel == "" {
+		cfg.LogLevel = defaultLogLevel
 	}
 
 	cfg.namespace = os.Getenv(namespaceEnv)

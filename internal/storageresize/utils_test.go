@@ -184,7 +184,7 @@ func newPrometheusForTest(name string, storageSize string) *monitoringv1.Prometh
 
 func newResizeStepsForTest(k8sClient client.Client, storageSize string) *defaultResizeSteps {
 	return &defaultResizeSteps{
-		config: config{
+		config: &Config{
 			promOperatorName: promOpNameForTest,
 			storageSize:      storageSize,
 			namespace:        nsForTest,

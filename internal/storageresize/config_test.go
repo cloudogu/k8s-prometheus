@@ -13,11 +13,11 @@ func TestReadConfig(t *testing.T) {
 		t.Setenv(promOpNameEnv, "aOpName")
 		t.Setenv(storageSizeEnv, "10Gi")
 
-		cfg, err := readConfig()
+		cfg, err := ReadConfigFromEnv()
 
 		assert.NoError(t, err)
-		assert.Equal(t, &config{
-			logLevel:         "ERROR",
+		assert.Equal(t, &Config{
+			LogLevel:         "ERROR",
 			promOperatorName: "aOpName",
 			storageSize:      "10Gi",
 			namespace:        "ns1",
@@ -29,10 +29,10 @@ func TestReadConfig(t *testing.T) {
 		t.Setenv(promOpNameEnv, "aOpName")
 		t.Setenv(storageSizeEnv, "10Gi")
 
-		cfg, err := readConfig()
+		cfg, err := ReadConfigFromEnv()
 
 		assert.NoError(t, err)
-		assert.Equal(t, defaultLogLevel, cfg.logLevel)
+		assert.Equal(t, defaultLogLevel, cfg.LogLevel)
 	})
 
 	t.Run("should return an error if no namespace is specified", func(t *testing.T) {
@@ -40,7 +40,7 @@ func TestReadConfig(t *testing.T) {
 		t.Setenv(promOpNameEnv, "aOpName")
 		t.Setenv(storageSizeEnv, "10Gi")
 
-		_, err := readConfig()
+		_, err := ReadConfigFromEnv()
 
 		assert.ErrorContains(t, err, namespaceEnv)
 	})
@@ -50,7 +50,7 @@ func TestReadConfig(t *testing.T) {
 		t.Setenv(namespaceEnv, "ns1")
 		t.Setenv(storageSizeEnv, "10Gi")
 
-		_, err := readConfig()
+		_, err := ReadConfigFromEnv()
 
 		assert.ErrorContains(t, err, promOpNameEnv)
 	})
@@ -60,7 +60,7 @@ func TestReadConfig(t *testing.T) {
 		t.Setenv(namespaceEnv, "ns1")
 		t.Setenv(promOpNameEnv, "aOpName")
 
-		_, err := readConfig()
+		_, err := ReadConfigFromEnv()
 
 		assert.ErrorContains(t, err, storageSizeEnv)
 	})
@@ -71,7 +71,7 @@ func TestReadConfig(t *testing.T) {
 		t.Setenv(promOpNameEnv, "aOpName")
 		t.Setenv(storageSizeEnv, "10,45")
 
-		_, err := readConfig()
+		_, err := ReadConfigFromEnv()
 
 		assert.ErrorContains(t, err, "storage quantity")
 		assert.ErrorContains(t, err, storageSizeEnv)

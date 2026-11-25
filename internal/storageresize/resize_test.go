@@ -10,7 +10,20 @@ import (
 	"github.com/stretchr/testify/assert"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 )
+
+func TestNewResizeSteps(t *testing.T) {
+	t.Run("should set the fields correctly", func(t *testing.T) {
+		cfg := &Config{}
+		k8sClient := fake.NewFakeClient()
+
+		resizeStps := NewResizeSteps(cfg, k8sClient)
+
+		assert.Same(t, cfg, resizeStps.config)
+		assert.Same(t, k8sClient, resizeStps.k8sClient)
+	})
+}
 
 func TestPatchPVCs(t *testing.T) {
 	t.Run("should only patch PVCs that are part of prometheus", func(t *testing.T) {
@@ -249,24 +262,6 @@ func TestDeleteStatefulSet(t *testing.T) {
 }
 
 func TestResizeStorage(t *testing.T) {
-	t.Run("should propagate configuration error", func(t *testing.T) {
-		fakeResizeStps := &fakeResizeSteps{configureError: errors.New("configErr")}
-
-		err := ResizeStorage(fakeResizeStps)
-
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "configErr")
-	})
-
-	t.Run("should propagate create k8s client error", func(t *testing.T) {
-		fakeResizeStps := &fakeResizeSteps{createK8sClientError: errors.New("createK8sClientErr")}
-
-		err := ResizeStorage(fakeResizeStps)
-
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "createK8sClientErr")
-	})
-
 	t.Run("should propagate patch PVC error", func(t *testing.T) {
 		fakeResizeStps := &fakeResizeSteps{patchPVCError: errors.New("patchPVCErr")}
 
