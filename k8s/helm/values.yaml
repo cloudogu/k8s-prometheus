@@ -13,7 +13,11 @@ authProxy:
     storage: 1Gi # Some cloud providers don't support less than 1 GiB
 prometheusStorageResize:
   image: cloudogu/k8s-prometheus-tools:87.5.1-3
+  # logLevel determines the verbosity of log output of the storage resize job container.
+  # Valid log levels are: ERROR, INFO, WARN, DEBUG. Defaults to INFO.
   logLevel: "INFO"
+  # annotations contains annotations for the storage resize job. You only should overwrite them
+  # if your set-up does not use Helm hooks, f. i. GitOps/ArgoCD. Please see the docs for more information.
   annotations:
     # annotations for the job
     job:

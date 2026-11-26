@@ -20,6 +20,17 @@ import (
 
 const prometheusOperatorNameLabel = "operator.prometheus.io/name"
 
+// resizeSteps modifies the Prometheus operator storage to a larger value. Prometheus consists of a stateful set
+// whose storage resizing is only awkwardly possible due to the nature of stateful sets.
+// Production implementations apply the following steps:
+//  1. Patch the size of all PVCs that belong to Prometheus. Since a PVC's size can only be increased,
+//     we will abort the process immediately if the specified size is smaller.
+//  2. Pause the reconciliation of the Prometheus CR to prevent the Prometheus operator to recreate the
+//     Statefulset before we patch the storage size in the Prometheus CR in the next step.
+//  3. Patch the storage size in the Prometheus CR so that it matches the size of the PVCs
+//  4. Delete the underlying StatefulSet using the orphan deletion strategy. The PVCs will not be deleted.
+//  5. Continue the reconciliation of the Prometheus CR. The Prometheus operator recreates the Statefulset with
+//     the new storage size, without recreating the PVCs.
 type resizeSteps interface {
 	patchPVCs(ctx context.Context) error
 	setPrometheusPaused(ctx context.Context, pause bool) error
