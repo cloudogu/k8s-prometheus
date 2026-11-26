@@ -65,7 +65,7 @@ func (d *defaultResizeSteps) patchPVCs(ctx context.Context) error {
 		client.InNamespace(d.config.namespace),
 		client.MatchingLabels{prometheusOperatorNameLabel: d.config.promOperatorName})
 	if err != nil {
-		return fmt.Errorf("get list of PVCs: %w", err)
+		return fmt.Errorf("list PVCs: %w", err)
 	}
 
 	storageQuantity, err := resource.ParseQuantity(d.config.storageSize)

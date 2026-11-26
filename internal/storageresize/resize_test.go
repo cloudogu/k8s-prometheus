@@ -3,14 +3,18 @@ package storageresize
 import (
 	"context"
 	"errors"
-	"fmt"
-	"slices"
 	"testing"
 
+	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
+	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
 )
 
 var testCtx = context.Background()
@@ -20,16 +24,16 @@ func TestNewResizeSteps(t *testing.T) {
 		cfg := &Config{}
 		k8sClient := fake.NewFakeClient()
 
-		resizeStps := NewResizeSteps(cfg, k8sClient)
+		sut := NewResizeSteps(cfg, k8sClient)
 
-		assert.Same(t, cfg, resizeStps.config)
-		assert.Same(t, k8sClient, resizeStps.k8sClient)
+		assert.Same(t, cfg, sut.config)
+		assert.Same(t, k8sClient, sut.k8sClient)
 	})
 }
 
 func TestPatchPVCs(t *testing.T) {
 	t.Run("should only patch those two PVCs that are part of prometheus", func(t *testing.T) {
-		pvcList := newPVCListForTest(
+		pvcList := &corev1.PersistentVolumeClaimList{Items: []corev1.PersistentVolumeClaim{
 			newPVCForTest(t, "pvc1", "10Gi", map[string]string{
 				prometheusOperatorNameLabel: promOpNameForTest,
 			}),
@@ -42,226 +46,305 @@ func TestPatchPVCs(t *testing.T) {
 			newPVCForTest(t, "pvc4", "5Gi", map[string]string{
 				"example.com/name": "aValue",
 			}),
-		)
-		counter := &callCounter{}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		}}
+		var listWasCalled bool
+		var actualPatchedPvcs []string
+		var actualPvcQuantities []resource.Quantity
+		fakeClient := newFakeClientBuilder(t).
 			WithLists(pvcList).
+			WithInterceptorFuncs(interceptor.Funcs{
+				List: func(ctx context.Context, client client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
+					listWasCalled = true
+					return client.List(ctx, list, opts...)
+				},
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					pvc, ok := obj.(*corev1.PersistentVolumeClaim)
+					require.True(t, ok)
+					actualPatchedPvcs = append(actualPatchedPvcs, pvc.GetName())
+					actualPvcQuantities = append(actualPvcQuantities, *pvc.Spec.Resources.Requests.Storage())
+					return client.Patch(ctx, obj, patch, opts...)
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
+		sut := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.patchPVCs(testCtx)
+		err := sut.patchPVCs(testCtx)
 
-		assert.NoError(t, err)
-		assert.Equal(t, 1, counter.listCount)
-		assert.Equal(t, 2, counter.patchCount)
-		assert.Equal(t, []string{"pvc1", "pvc2"}, counter.patchedPVCs)
+		require.NoError(t, err)
+		assert.True(t, listWasCalled)
+		assert.Equal(t, []string{"pvc1", "pvc2"}, actualPatchedPvcs)
 
 		expectedPvcQuantities := []resource.Quantity{
 			resource.MustParse("20Gi"),
 			resource.MustParse("20Gi"),
 		}
-		actualPvcQuantities := counter.patchedPVCStorageQuantities
-		quantitiesAreEqual := slices.EqualFunc(
-			expectedPvcQuantities,
-			actualPvcQuantities,
-			func(a resource.Quantity, b resource.Quantity) bool { return a.Equal(b) },
-		)
-		assert.True(t, quantitiesAreEqual)
+		assert.ElementsMatch(t, expectedPvcQuantities, actualPvcQuantities)
 	})
 
 	t.Run("should propagate a client list error", func(t *testing.T) {
-		pvcList := newPVCListForTest()
-		counter := &callCounter{listError: errors.New("listError")}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		pvcList := &corev1.PersistentVolumeClaimList{}
+		fakeClient := newFakeClientBuilder(t).
 			WithLists(pvcList).
+			WithInterceptorFuncs(interceptor.Funcs{
+				List: func(ctx context.Context, client client.WithWatch, list client.ObjectList, opts ...client.ListOption) error {
+					return assert.AnError
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
+		sut := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.patchPVCs(testCtx)
+		err := sut.patchPVCs(testCtx)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "listError")
+		assert.ErrorContains(t, err, "list PVCs")
 	})
 
 	t.Run("should propagate a quantity parse error", func(t *testing.T) {
-		pvcList := newPVCListForTest()
-		counter := &callCounter{}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		pvcList := &corev1.PersistentVolumeClaimList{}
+		fakeClient := newFakeClientBuilder(t).
 			WithLists(pvcList).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "XXGi")
+		sut := newResizeStepsForTest(fakeClient, "XXGi")
 
-		err := resizeStps.patchPVCs(testCtx)
+		err := sut.patchPVCs(testCtx)
 
 		assert.Error(t, err)
 		assert.ErrorContains(t, err, "storage")
 	})
 
 	t.Run("should propagate a client patch error", func(t *testing.T) {
-		pvcList := newPVCListForTest(
+		pvcList := &corev1.PersistentVolumeClaimList{Items: []corev1.PersistentVolumeClaim{
 			newPVCForTest(t, "pvc1", "10Gi", map[string]string{
 				prometheusOperatorNameLabel: promOpNameForTest,
 			}),
-		)
-		counter := &callCounter{patchError: errors.New("patchError")}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		}}
+		fakeClient := newFakeClientBuilder(t).
 			WithLists(pvcList).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					return assert.AnError
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
+		sut := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.patchPVCs(testCtx)
+		err := sut.patchPVCs(testCtx)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "patchError")
+		assert.ErrorContains(t, err, "patch PVC")
 	})
 }
 
 func TestSetPrometheusPaused(t *testing.T) {
 	t.Run("should pause reconciliation of the prometheus resource", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{patchedPromPaused: Unknown}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", false)
+		var getCalled bool
+		var patchCalled bool
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+					getCalled = true
+					return client.Get(ctx, key, obj, opts...)
+				},
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					patchCalled = true
+					patchedProm, ok := obj.(*monitoringv1.Prometheus)
+					require.True(t, ok)
+					assert.True(t, patchedProm.Spec.Paused)
+					return client.Patch(ctx, obj, patch, opts...)
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
+		sut := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(testCtx, true)
+		err := sut.setPrometheusPaused(testCtx, true)
 
-		assert.NoError(t, err)
-		assert.Equal(t, 1, counter.getCount)
-		assert.Equal(t, 1, counter.patchCount)
-		assert.Equal(t, Paused, counter.patchedPromPaused)
+		require.NoError(t, err)
+		assert.True(t, getCalled)
+		assert.True(t, patchCalled)
 	})
 
 	t.Run("should continue reconciliation of the prometheus resource", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{patchedPromPaused: Unknown}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", true)
+		var getCalled bool
+		var patchCalled bool
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+					getCalled = true
+					return client.Get(ctx, key, obj, opts...)
+				},
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					patchCalled = true
+					patchedProm, ok := obj.(*monitoringv1.Prometheus)
+					require.True(t, ok)
+					assert.False(t, patchedProm.Spec.Paused)
+					return client.Patch(ctx, obj, patch, opts...)
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
+		sut := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(testCtx, false)
+		err := sut.setPrometheusPaused(testCtx, false)
 
-		assert.NoError(t, err)
-		assert.Equal(t, 1, counter.getCount)
-		assert.Equal(t, 1, counter.patchCount)
-		assert.Equal(t, NotPaused, counter.patchedPromPaused)
+		require.NoError(t, err)
+		assert.True(t, getCalled)
+		assert.True(t, patchCalled)
 	})
 
 	t.Run("should propagate a client get error", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{getError: errors.New("getError")}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", false)
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+					return assert.AnError
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
+		sut := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(testCtx, false)
+		err := sut.setPrometheusPaused(testCtx, false)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "getError")
+		assert.ErrorContains(t, err, "get prometheus")
 	})
 
 	t.Run("should propagate a client patch error", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{patchError: errors.New("patchError")}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", false)
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					return assert.AnError
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "20Gi")
+		sut := newResizeStepsForTest(fakeClient, "20Gi")
 
-		err := resizeStps.setPrometheusPaused(testCtx, false)
+		err := sut.setPrometheusPaused(testCtx, false)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "patchError")
+		assert.ErrorContains(t, err, "patch prometheus")
 	})
 }
 
 func TestPatchPrometheus(t *testing.T) {
 	t.Run("should patch prometheus resources", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{patchedPromPaused: Unknown}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", false)
+		var patchCalled bool
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					patchCalled = true
+					patchedProm, ok := obj.(*monitoringv1.Prometheus)
+					require.True(t, ok)
+					assert.Equal(t, resource.MustParse("12Gi"), *patchedProm.Spec.Storage.VolumeClaimTemplate.Spec.Resources.Requests.Storage())
+					return client.Patch(ctx, obj, patch, opts...)
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
+		sut := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
+		err := sut.patchPrometheusVolumeClaimTemplate(testCtx)
 
-		assert.NoError(t, err)
-		assert.Equal(t, 1, counter.getCount)
-		assert.Equal(t, 1, counter.patchCount)
-		assert.True(t, counter.patchedPromStorageQuantity.Cmp(resource.MustParse("12Gi")) == 0)
+		require.NoError(t, err)
+		assert.True(t, patchCalled)
 	})
 
 	t.Run("should propagate a client get error", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{getError: errors.New("getError")}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", false)
+		var getCalled bool
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Get: func(ctx context.Context, client client.WithWatch, key client.ObjectKey, obj client.Object, opts ...client.GetOption) error {
+					getCalled = true
+					return assert.AnError
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
+		sut := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
+		err := sut.patchPrometheusVolumeClaimTemplate(testCtx)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "getError")
+		assert.True(t, getCalled)
+		assert.ErrorContains(t, err, "get prometheus")
 	})
 
 	t.Run("should propagate a quantity parse error", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", false)
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "XXGi")
+		sut := newResizeStepsForTest(fakeClient, "XXGi")
 
-		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
+		err := sut.patchPrometheusVolumeClaimTemplate(testCtx)
 
 		assert.Error(t, err)
-		assert.ErrorContains(t, err, "storage")
+		assert.ErrorContains(t, err, "parse storage quantity")
 	})
 
 	t.Run("should propagate a client patch error", func(t *testing.T) {
-		prom := newPrometheusForTest(promOpNameForTest, "10Gi")
-		counter := &callCounter{patchError: errors.New("patchError")}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).
+		prom := newPrometheusForTest(promOpNameForTest, "10Gi", false)
+		var patchCalled bool
+		fakeClient := newFakeClientBuilder(t).
 			WithObjects(prom).
+			WithInterceptorFuncs(interceptor.Funcs{
+				Patch: func(ctx context.Context, client client.WithWatch, obj client.Object, patch client.Patch, opts ...client.PatchOption) error {
+					patchCalled = true
+					return assert.AnError
+				},
+			}).
 			Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
+		sut := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.patchPrometheusVolumeClaimTemplate(testCtx)
+		err := sut.patchPrometheusVolumeClaimTemplate(testCtx)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "patchError")
+		assert.True(t, patchCalled)
+		assert.ErrorContains(t, err, "patch prometheus")
 	})
 }
 
 func TestDeleteStatefulSet(t *testing.T) {
 	t.Run("should delete statefulset that is part of prometheus with propagation policy orphan", func(t *testing.T) {
-		counter := &callCounter{}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
+		var deleteAllOfCalled bool
+		fakeClient := newFakeClientBuilder(t).
+			WithInterceptorFuncs(interceptor.Funcs{
+				DeleteAllOf: func(ctx context.Context, theClient client.WithWatch, obj client.Object, opts ...client.DeleteAllOfOption) error {
+					deleteAllOfOpts := client.DeleteAllOfOptions{}
+					deleteAllOfOpts.ApplyOptions(opts)
 
-		err := resizeStps.deleteStatefulSet(testCtx)
+					deleteAllOfCalled = true
+					assert.IsType(t, obj, &appsv1.StatefulSet{})
+					assert.Equal(t, nsForTest, deleteAllOfOpts.ListOptions.Namespace)
+					assert.Equal(t, prometheusOperatorNameLabel+"="+promOpNameForTest, deleteAllOfOpts.AsListOptions().LabelSelector)
+					assert.Equal(t, metav1.DeletePropagationOrphan, *deleteAllOfOpts.AsDeleteOptions().PropagationPolicy)
 
-		assert.NoError(t, err)
-		assert.Equal(t, "StatefulSet", counter.deleteAllOfType)
-		assert.Equal(t, nsForTest, counter.deleteAllOfTypenNamespace)
-		assert.Equal(t, metav1.DeletePropagationOrphan, counter.deleteAllOfPropagationPolicy)
-		assert.Equal(t, fmt.Sprintf("operator.prometheus.io/name=%s", promOpNameForTest), counter.deleteAllOfLabelSelector)
+					return theClient.DeleteAllOf(ctx, obj, opts...)
+				},
+			}).
+			Build()
+		sut := newResizeStepsForTest(fakeClient, "12Gi")
+
+		err := sut.deleteStatefulSet(testCtx)
+
+		require.NoError(t, err)
+		assert.True(t, deleteAllOfCalled)
 	})
 
 	t.Run("should propagate a client deleteAllOf error", func(t *testing.T) {
-		counter := &callCounter{deleteAllOfError: errors.New("deleteAllOfError")}
-		fakeClient := newFakeClientBuilderWithCounter(t, counter).Build()
-		resizeStps := newResizeStepsForTest(fakeClient, "12Gi")
+		fakeClient := newFakeClientBuilder(t).
+			WithInterceptorFuncs(interceptor.Funcs{
+				DeleteAllOf: func(ctx context.Context, theClient client.WithWatch, obj client.Object, opts ...client.DeleteAllOfOption) error {
+					return assert.AnError
+				},
+			}).
+			Build()
+		sut := newResizeStepsForTest(fakeClient, "12Gi")
 
-		err := resizeStps.deleteStatefulSet(testCtx)
+		err := sut.deleteStatefulSet(testCtx)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "deleteAllOfError")
+		assert.ErrorContains(t, err, "delete all statefulsets")
 	})
 }
 
