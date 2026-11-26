@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Added
+- [#47] Add a Helm hook that adjusts the size of the Prometheus PVC, if necessary, following an upgrade.
+
+### Fixed
+- [#47] Fix an issue that caused duplicate labels on some K8s resources
+
+### Security
+- [#47] Update go to version 1.27.4. This fixes CVE-2026-111943
 
 ## [v87.5.1-3] - 2026-07-08
 ### Fixed

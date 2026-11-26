@@ -62,6 +62,7 @@ update_versions_modify_files() {
 
   # update version of sidecar-image in values.yaml
   ./.bin/yq -i ".kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image |= sub(\":(([0-9]+)\.([0-9]+)\.([0-9]+)((?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))|(?:\+[0-9A-Za-z-]+))?)\", \":${newReleaseVersion}\")" "${prometheusValues}"
+  ./.bin/yq -i ".prometheusStorageResize.image |= sub(\":(([0-9]+)\.([0-9]+)\.([0-9]+)((?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))|(?:\+[0-9A-Za-z-]+))?)\", \":${newReleaseVersion}\")" "${prometheusValues}"
 
   local authSidecarImage
   authSidecarImage=$(./.bin/yq '.kube-prometheus-stack.prometheus.prometheusSpec.containers.[0].image' < "${prometheusValues}")

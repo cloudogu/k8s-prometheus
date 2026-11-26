@@ -1,0 +1,36 @@
+{{ $kubePromStack := index .Values "kube-prometheus-stack" }}
+{{- $storage := dig "prometheus" "prometheusSpec" "storageSpec" "volumeClaimTemplate" "spec" "resources" "requests" "storage" nil $kubePromStack }}
+{{- /* If no storage size is specified, we don't need this job. */ -}}
+{{ if $storage }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ template "job.resize.name" . }}
+  labels:
+    {{- include "k8s-prometheus.labels" . | nindent 4 }}
+  {{- if .Values.prometheusStorageResize.annotations.job }}
+  annotations:
+    {{- toYaml .Values.prometheusStorageResize.annotations.job | nindent 4 }}
+  {{- end}}
+spec:
+  template:
+    spec:
+      serviceAccountName: {{ template "job.resize.name" . }}
+      containers:
+        - name: prometheus-storage-resize
+          image: {{ .Values.prometheusStorageResize.image }}
+          command: ["/storageresize"]
+          env:
+            - name: LOG_LEVEL
+              value: {{ .Values.prometheusStorageResize.logLevel }}
+            - name: NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: PROMETHEUS_OPERATOR_NAME
+              value: {{ template "kube-prometheus-stack.prometheus.crname" . }}
+            - name: STORAGE_SIZE
+              value: {{ $storage }}
+      restartPolicy: Never
+  backoffLimit: 0
+{{- end  -}}
