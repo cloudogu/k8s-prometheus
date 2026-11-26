@@ -2,19 +2,25 @@ package storageresize
 
 import (
 	"context"
-	"errors"
 	"testing"
 
 	monitoringv1 "github.com/prometheus-operator/prometheus-operator/pkg/apis/monitoring/v1"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/fake"
 	"sigs.k8s.io/controller-runtime/pkg/client/interceptor"
+)
+
+const (
+	nsForTest         = "ns1"
+	promOpNameForTest = "aPromOpName"
 )
 
 var testCtx = context.Background()
@@ -350,55 +356,148 @@ func TestDeleteStatefulSet(t *testing.T) {
 
 func TestResizeStorage(t *testing.T) {
 	t.Run("should propagate patch PVC error", func(t *testing.T) {
-		fakeResizeStps := &fakeResizeSteps{patchPVCError: errors.New("patchPVCErr")}
+		resizeStepsMock := newMockResizeSteps(t)
+		resizeStepsMock.EXPECT().
+			patchPVCs(mock.Anything).
+			Return(assert.AnError)
 
-		err := ResizeStorage(fakeResizeStps)
+		err := ResizeStorage(resizeStepsMock)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "patchPVCErr")
+		assert.ErrorContains(t, err, "patch PVCs")
 	})
 
 	t.Run("should propagate prometheus pause=true error", func(t *testing.T) {
-		fakeResizeStps := &fakeResizeSteps{prometheusPauseErrors: []error{errors.New("firstPrometheusPauseErr")}}
+		resizeStepsMock := newMockResizeSteps(t)
+		resizeStepsMock.EXPECT().
+			patchPVCs(mock.Anything).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			setPrometheusPaused(mock.Anything, true).
+			Return(assert.AnError)
 
-		err := ResizeStorage(fakeResizeStps)
+		err := ResizeStorage(resizeStepsMock)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "firstPrometheusPauseErr")
+		assert.ErrorContains(t, err, "pause prometheus")
 	})
 
 	t.Run("should propagate prometheus patch error", func(t *testing.T) {
-		fakeResizeStps := &fakeResizeSteps{
-			prometheusPauseErrors: []error{nil},
-			patchPrometheusError:  errors.New("patchPrometheusError"),
-		}
+		resizeStepsMock := newMockResizeSteps(t)
+		resizeStepsMock.EXPECT().
+			patchPVCs(mock.Anything).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			setPrometheusPaused(mock.Anything, true).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			patchPrometheusVolumeClaimTemplate(mock.Anything).
+			Return(assert.AnError)
 
-		err := ResizeStorage(fakeResizeStps)
+		err := ResizeStorage(resizeStepsMock)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "patchPrometheusError")
+		assert.ErrorContains(t, err, "patch prometheus")
 	})
 
 	t.Run("should propagate delete statefulset error", func(t *testing.T) {
-		fakeResizeStps := &fakeResizeSteps{
-			prometheusPauseErrors:  []error{nil},
-			deleteStatefulSetError: errors.New("deleteStatefulSetErr"),
-		}
+		resizeStepsMock := newMockResizeSteps(t)
+		resizeStepsMock.EXPECT().
+			patchPVCs(mock.Anything).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			setPrometheusPaused(mock.Anything, true).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			patchPrometheusVolumeClaimTemplate(mock.Anything).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			deleteStatefulSet(mock.Anything).
+			Return(assert.AnError)
 
-		err := ResizeStorage(fakeResizeStps)
+		err := ResizeStorage(resizeStepsMock)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "deleteStatefulSetErr")
+		assert.ErrorContains(t, err, "delete statefulset")
 	})
 
 	t.Run("should propagate prometheus pause=false error", func(t *testing.T) {
-		fakeResizeStps := &fakeResizeSteps{
-			prometheusPauseErrors: []error{nil, errors.New("secondPrometheusPauseErr")},
-		}
+		resizeStepsMock := newMockResizeSteps(t)
+		resizeStepsMock.EXPECT().
+			patchPVCs(mock.Anything).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			setPrometheusPaused(mock.Anything, true).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			patchPrometheusVolumeClaimTemplate(mock.Anything).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			deleteStatefulSet(mock.Anything).
+			Return(nil)
+		resizeStepsMock.EXPECT().
+			setPrometheusPaused(mock.Anything, false).
+			Return(assert.AnError)
 
-		err := ResizeStorage(fakeResizeStps)
+		err := ResizeStorage(resizeStepsMock)
 
-		assert.Error(t, err)
-		assert.ErrorContains(t, err, "secondPrometheusPauseErr")
+		assert.ErrorContains(t, err, "continue prometheus")
 	})
+}
+
+func newFakeClientBuilder(t *testing.T) *fake.ClientBuilder {
+	t.Helper()
+	scheme := runtime.NewScheme()
+	corev1.AddToScheme(scheme)
+	appsv1.AddToScheme(scheme)
+	monitoringv1.AddToScheme(scheme)
+	return fake.NewClientBuilder().WithScheme(scheme)
+}
+
+func newPVCForTest(t *testing.T, name string, storageSize string, labels map[string]string) corev1.PersistentVolumeClaim {
+	storageQuantity, err := resource.ParseQuantity(storageSize)
+	require.NoError(t, err)
+
+	return corev1.PersistentVolumeClaim{
+		Name:      name,
+		Namespace: nsForTest,
+		Labels:    labels,
+		Spec: corev1.PersistentVolumeClaimSpec{
+			Resources: corev1.VolumeResourceRequirements{
+				Requests: map[corev1.ResourceName]resource.Quantity{
+					corev1.ResourceStorage: storageQuantity,
+				},
+			},
+		},
+	}
+}
+
+func newPrometheusForTest(name string, storageSize string, paused bool) *monitoringv1.Prometheus {
+	return &monitoringv1.Prometheus{
+		Name:      name,
+		Namespace: nsForTest,
+		Spec: monitoringv1.PrometheusSpec{
+			CommonPrometheusFields: monitoringv1.CommonPrometheusFields{
+				Paused: paused,
+				Storage: &monitoringv1.StorageSpec{
+					VolumeClaimTemplate: monitoringv1.EmbeddedPersistentVolumeClaim{
+						Spec: corev1.PersistentVolumeClaimSpec{
+							Resources: corev1.VolumeResourceRequirements{
+								Requests: corev1.ResourceList{
+									corev1.ResourceStorage: resource.MustParse(storageSize),
+								},
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+}
+
+func newResizeStepsForTest(k8sClient client.Client, storageSize string) *defaultResizeSteps {
+	return &defaultResizeSteps{
+		config: &Config{
+			promOperatorName: promOpNameForTest,
+			storageSize:      storageSize,
+			namespace:        nsForTest,
+		},
+		k8sClient: k8sClient,
+	}
 }

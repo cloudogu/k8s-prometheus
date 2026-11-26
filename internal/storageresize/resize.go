@@ -157,7 +157,7 @@ func ResizeStorage(resizeSteps resizeSteps) error {
 
 	err = resizeSteps.patchPrometheusVolumeClaimTemplate(ctx)
 	if err != nil {
-		return fmt.Errorf("patch prometheus: %w", err)
+		return fmt.Errorf("patch prometheus VolumeClaimTemplate: %w", err)
 	}
 
 	err = resizeSteps.deleteStatefulSet(ctx)

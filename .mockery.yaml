@@ -3,6 +3,9 @@ structname: '{{.Mock}}{{.InterfaceName | firstUpper}}'
 recursive: true
 template: testify
 packages:
-  github.com/cloudogu/k8s-prometheus/auth/internal/auth:
+  github.com/cloudogu/k8s-prometheus/tools/internal/auth:
+    config:
+      all: true
+  github.com/cloudogu/k8s-prometheus/tools/internal/storageresize:
     config:
       all: true
